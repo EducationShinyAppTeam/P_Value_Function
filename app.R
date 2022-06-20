@@ -4,23 +4,26 @@ library(shinydashboard)
 library(shinyBS)
 library(shinyWidgets)
 library(boastUtils)
+library(exactci)
+library(ggplot2)
+library(dplyr)
 
-# Load additional dependencies and setup functions
-# source("global.R")
+# Load additional funCtions
+source("samplingfunction.R")
 
 # Define UI for App ----
 ui <- list(
   ## Create the app page ----
   dashboardPage(
-    skin = "blue",
+    skin = "purple",
     ### Create the app header ----
     dashboardHeader(
-      title = "App Template", # You may use a shortened form of the title here
+      title = "P-Value Function", 
       titleWidth = 250,
       tags$li(class = "dropdown", actionLink("info", icon("info"))),
       tags$li(
         class = "dropdown",
-        boastUtils::surveyLink(name = "App_Template")
+        boastUtils::surveyLink(name = "P-Value Function")
       ),
       tags$li(
         class = "dropdown",
@@ -37,9 +40,6 @@ ui <- list(
         menuItem("Overview", tabName = "overview", icon = icon("tachometer-alt")),
         menuItem("Prerequisites", tabName = "prerequisites", icon = icon("book")),
         menuItem("Explore", tabName = "explore", icon = icon("wpexplorer")),
-        menuItem("Challenge", tabName = "challenge", icon = icon("cogs")),
-        menuItem("Game", tabName = "game", icon = icon("gamepad")),
-        menuItem("Wizard", tabName = "wizard", icon = icon("hat-wizard")),
         menuItem("References", tabName = "references", icon = icon("leanpub"))
       ),
       tags$div(
@@ -54,24 +54,26 @@ ui <- list(
         tabItem(
           tabName = "overview",
           withMathJax(),
-          h1("Sample Application for BOAST Apps"), # This should be the full name.
-          p("This is a sample Shiny application for BOAST. Remember, this page
-            will act like the front page (home page) of your app. Thus you will
-            want to have this page catch attention and describe (in general terms)
-            what the user can do in the rest of the app."),
+          h1("P-Value Function and Hypothesis Testing"), # full name.
+          p("This app can generate the p-value function, which displays 
+            confidence limits and p-values of any confidence level of the parameter. 
+            And the user can use this app to do hypothesis testing for one sample."),
           h2("Instructions"),
-          p("This information will change depending on what you want to do."),
           tags$ol(
-            tags$li("Review any prerequiste ideas using the Prerequistes tab."),
-            tags$li("Explore the Exploration Tab."),
-            tags$li("Challenge yourself."),
-            tags$li("Play the game to test how far you've come.")
+            tags$li("Click the Go button to enter the Explore page."),
+            tags$li("Enter the tab of hypothesis test which one you want to do, 
+                    select these inputs, then click the simulate button to view 
+                    the sample information."),
+            tags$li("View p-value function plot, sampling distribution and test 
+                    results."),
+            tags$li("Adjust your inputs and click the re-simulate button again to 
+                    start a new test.")
           ),
-          ##### Go Button--location will depend on your goals
+          ##### Go Button
           div(
             style = "text-align: center;",
             bsButton(
-              inputId = "go1",
+              inputId = "go",
               label = "GO!",
               size = "large",
               icon = icon("bolt"),
@@ -83,11 +85,8 @@ ui <- list(
           br(),
           h2("Acknowledgements"),
           p(
-            "This version of the app was developed and coded by Neil J.
-            Hatfield  and Robert P. Carey, III.",
+            "This version of the app was developed and coded by Jing Fu.",
             br(),
-            "We would like to extend a special thanks to the Shiny Program
-            Students.",
             br(),
             br(),
             "Cite this app as:",
@@ -95,7 +94,7 @@ ui <- list(
             citeApp(),
             br(),
             br(),
-            div(class = "updated", "Last Update: 5/19/2022 by NJH.")
+            div(class = "updated", "Last Update: 6/19/2022 by JF.")
           )
         ),
         #### Set up the Prerequisites Page ----
@@ -104,111 +103,285 @@ ui <- list(
           withMathJax(),
           h2("Prerequisites"),
           p("In order to get the most out of this app, please review the
-            following:"),
-          tags$ul(
-            tags$li("Pre-req 1--Technical/Conceptual Prerequisites are ideas that
-                    users need to have in order to engage with your app fully."),
-            tags$li("Pre-req 2--Contextual Prerequisites refer to any information
-                    about a context in your app that will enrich a user's
-                    understandings."),
-            tags$li("Pre-req 3"),
-            tags$li("Pre-req 4")
-          ),
-          p("Notice the use of an unordered list; users can move through the
-            list any way they wish."),
+            following information that will be used in the app."),
           box(
-            title = strong("Null Hypothesis Significance Tests (NHSTs)"),
-            status = "primary",
-            collapsible = TRUE,
-            collapsed = TRUE,
-            width = '100%',
-            "In the Confirmatory Data Analysis tradition, null hypothesis
-            significance tests serve as a critical tool to confirm that a
-            particular theoretical model describes our data and to make a
-            generalization from our sample to the broader population
-            (i.e., make an inference). The null hypothesis often reflects the
-            simpler of two models (e.g., 'no statistical difference',
-            'there is an additive difference of 1', etc.) that we will use to
-            build a sampling distribution for our chosen estimator. These
-            methods let us test whether our sample data are consistent with this
-            simple model (null hypothesis)."
-          ),
-          box(
-            title = strong(tags$em("p"), "-values"),
+            title = strong("p-values"),
             status = "primary",
             collapsible = TRUE,
             collapsed = FALSE,
             width = '100%',
-            "The probability that our selected estimator takes on a value at
-            least as extreme as what we observed given our null hypothesis. If
-            we were to carry out our study infinitely many times and the null
-            hypothesis accurately modeled what we're studying, then we would
-            expect for our estimator to produce a value at least as extreme as
-            what we have seen 100*(p-value)% of the time. The larger the
-            p-value, the more often we would expect our estimator to take on a
-            value at least as extreme as what we've seen; the smaller, the less
-            often."
+            "The probability value of the estimator we chose is at least as 
+            extreme as the value we observed under the null hypothesis. 
+            If we carry out our study infinite times and the null hypothesis 
+            accurately simulates what we are studying, then we will expect our 
+            estimator to produce values at least as extreme as what we have seen 
+            100*(p-value)% of the time. The larger the p-value, the more often 
+            we will hope that our estimator to take on a value at least as extreme 
+            as we see; The smaller, the less often."
+          ),
+          box(
+            title = strong("p-value functions"),
+            status = "primary",
+            collapsible = TRUE,
+            collapsed = TRUE,
+            width = '100%',
+            "The p-value function displays the confidence intervals and p-values 
+            for any confidence level of the parameter. The p-value function can 
+            display a large amount of information: point estimates of the parameter, 
+            one-tail and two-tails confidence intervals at any level, and one-tail 
+            and two-tails p-values of any null and non-null values."
+          ),
+          box(
+            title = strong("Confidence Level"),
+            status = "primary",
+            collapsible = TRUE,
+            collapsed = TRUE,
+            width = '100%',
+            "The confidence level, k%, represents the long-run proportion of correspondingly 
+            confidence interval that end up containing the true value of the parameter. 
+            If we were to repeat the entire experiment, then k% of the time we will 
+            make an interval that contains the true value of the population parameter."
           )
         ),
-        #### Note: you must have at least one of the following pages. You might
-        #### have more than one type and/or more than one of the same type. This
-        #### will be up to you and the goals for your app.
         #### Set up an Explore Page ----
         tabItem(
           tabName = "explore",
           withMathJax(),
-          h2("Explore the Concept"),
-          p("This page should include something for the user to do, the more
-            active and engaging, the better. The purpose of this page is to help
-            the user build a productive understanding of the concept your app
-            is dedicated to."),
-          p("Common elements include graphs, sliders, buttons, etc."),
-          p("The following comes from the NHST Caveats App:"),
-        ),
-        #### Set up a Challenge Page ----
-        tabItem(
-          tabName = "challenge",
-          withMathJax(),
-          h2("Challenge Yourself"),
-          p("The general intent of a Challenge page is to have the user take
-            what they learned in an Exploration and apply that knowledge in new
-            contexts/situations. In essence, to have them challenge their
-            understanding by testing themselves."),
-          p("What this page looks like will be up to you. Something you might
-            consider is to re-create the tools of the Exploration page and then
-            a list of questions for the user to then answer.")
-        ),
-        #### Set up a Game Page ----
-        tabItem(
-          tabName = "game",
-          withMathJax(),
-          h2("Practice/Test Yourself with [Type of Game]"),
-          p("On this type of page, you'll set up a game for the user to play.
-            Game types include Tic-Tac-Toe, Matching, and a version Hangman to
-            name a few. If you have ideas for new game type, please let us know.")
-        ),
-        #### Set up a Wizard Page ----
-        tabItem(
-          tabName = "wizard",
-          withMathJax(),
-          h2("Wizard"),
-          p("This page will have a series of inputs and questions for the user to
-            answer/work through in order to have the app create something. These
-            types of Activity pages are currently rare as we try to avoid
-            creating 'calculators' in the BOAST project.")
+          h2("Explore the p-value funtion"),
+          p("On this page, you can explore p-value functions in different 
+            situations."),
+          p("Select the hypothesis test type, select the population distribution 
+            and then change the inputs. Once you are ready, click simulate. All 
+            p values are the results of the two tailed hypothesis test."),
+          fluidPage(
+            tabsetPanel(
+              id = "whichtype",
+              type = "tabs",
+              ##### Testing for single proportion ----
+              tabPanel(
+                title = "Single proportion",
+                value = "pro",
+                column(
+                  width = 4,
+                  offset = 0,
+                  wellPanel(
+                    #### input part----
+                    #population dis
+                    tags$strong("Population distribution"),
+                    radioButtons(
+                      inputId = "binomial", 
+                      label = NULL, 
+                      choices = c("Binomial"),
+                      selected = "Binomial", 
+                      width = '100%'),
+                    #confidence level
+                    tags$strong("Confidence level"),
+                    numericInput(
+                      inputId = "clofp",
+                      label = HTML(paste("1 - ","&alpha;")),
+                      min = 0.8,
+                      max = 0.99,
+                      step = 0.01,
+                      value = 0.95
+                    ),
+                    br(),
+                    #sample size
+                    tags$strong("Sample size"),
+                    sliderInput(
+                      inputId = "nofp",
+                      label = "n",
+                      min = 2,
+                      max = 90,
+                      step = 1,
+                      value = 50
+                    ),
+                    br(),
+                    #null hypothesis
+                    tags$strong("Null hypothesis"),
+                    sliderInput(
+                      inputId = "theta0ofp",
+                      label= div(HTML(paste0("H",tags$sub("0"),": p"))),
+                      min = 0,
+                      max = 1,
+                      step = 0.01,
+                      value = 0.55
+                    ),
+                    # simulate button
+                    div(
+                      style = "text-align: center;",
+                      bsButton(
+                        inputId = "simforp",
+                        label = "Simulate!",
+                        size = "large",
+                        style = "default"
+                      )
+                    ),
+                    br(),
+                    uiOutput("sampledataPop")
+                    
+                  )
+                ),
+                #### output prat----
+                column(
+                  width = 8,
+                  offset = 0,
+                  plotOutput("pfunctionPop"),
+                  br(),
+                  plotOutput("sampledistPop"),
+                  br(),
+                  checkboxInput("resultsPop",
+                                "Show test results", FALSE),
+                  conditionalPanel(
+                    condition = "input.resultsPop==1",
+                    tableOutput("pvaluePop")
+                  )
+                )
+              ),
+              ##### Testing for single mean ----
+              tabPanel(
+                title = "Single mean",
+                value = "mean",
+                column(
+                  width = 4,
+                  offset = 0,
+                  wellPanel(
+                    #### input part----
+                    #population dis
+                    tags$strong("Population distribution"),
+                    radioButtons(
+                      inputId = "types", 
+                      label = NULL, 
+                      choices = c("Poisson","Normal","Uniform"),
+                      selected = "Normal", 
+                      width = '100%'
+                    ),
+                    br(),
+                    #confidence level
+                    tags$strong("Confidence level"),
+                    numericInput(
+                      inputId = "cl",
+                      label = HTML(paste("1 - ","&alpha;")),
+                      min = 0.8,
+                      max = 0.99,
+                      step = 0.01,
+                      value = 0.95
+                    ),
+                    br(),
+                    #sample size
+                    tags$strong("Sample size"),
+                    sliderInput(
+                      inputId = "n",
+                      label = "n ",
+                      min = 2,
+                      max = 90,
+                      step = 1,
+                      value = 50
+                    ),
+                    br(),
+                    #null hypothesis
+                    tags$strong("Null hypothesis"),
+                    uiOutput("choosetheta0"),
+                    br(),
+                    #popsd for normal
+                    uiOutput("choosepopsd"),
+                    # simulate button
+                    div(
+                      style = "text-align: center;",
+                      bsButton(
+                        inputId = "sim",
+                        label = "Simulate!",
+                        size = "large",
+                        style = "default"
+                      )
+                    ),
+                    br(),
+                    uiOutput("sampledataMean")
+                    
+                  )
+                ),
+                #### output part----
+                column(
+                  width = 8,
+                  offset = 0,
+                  plotOutput("pfunctionMean"),
+                  br(),
+                  plotOutput("sampledist"),
+                  br(),
+                  checkboxInput("resultsMean",
+                                "Show test results", FALSE),
+                  conditionalPanel(
+                    condition = "input.resultsMean==1",
+                    tableOutput("pvalue")
+                  )
+                )
+              )
+            )
+          )
         ),
         #### Set up the References Page ----
         tabItem(
           tabName = "references",
           withMathJax(),
           h2("References"),
-          p("You'll need to fill in this page with all of the appropriate
-            references for your app."),
           p(
             class = "hangingindent",
-            "Bailey, E. (2015). shinyBS: Twitter bootstrap components for shiny.
-            (v0.61). [R package]. Available from
+            "Bailey, E. (2022). shinyBS: Twitter bootstrap components for shiny.
+            (v 0.61.1). [R package]. Available from
             https://CRAN.R-project.org/package=shinyBS"
+          ),
+          p(
+            class = "hangingindent",
+            "Carey, R. and Hatfield, N. J. (2022). boastUtils: BOAST utlities.
+            (v 0.1.12.3). [R package]. Available from
+            https://github.com/EducationShinyAppTeam/boastUtils"
+          ),
+          p(
+            class = "hangingindent",
+            "Change, W., and Borges Ribeiro, B. (2021). shinydashboard: Create 
+            dashboards with 'shiny'. (v 0.7.2) [R package]. Available from
+            https://CRAN.R-project.org/package=shinydashboard"
+          ),
+          p(
+            class = "hangingindent",
+            "Chang, W., Cheng J., Allaire, J., Sievert, C., Schloerke, B., Xie, Y.,
+            Allen, J., McPherson, J., Dipert, A., and Borges, B. (2021). shiny:
+            Web application framework for R. (v 1.7.1). [R package]. Available
+            from https://CRAN.R-project.org/package=shiny"
+          ),
+          p(
+            class = "hangingindent",
+            "Fay, M. (2010). exactci: Exact P-values and Matching Confidence 
+            Intervals for simple Discrete Parametric Cases. (v 1.4-2).[R package].
+            Available from 
+            https://CRAN.R-project.org/package=exactci
+            "
+          ),
+          p(
+            class = "hangingindent",
+            "Infanger, D, Schmidt-Trucksäss, A. (2019). P value functions: An underused 
+            method to present research results and to promote quantitative reasoning. 
+            Statistics in Medicine.
+            Available from 
+            https://doi.org/10.1002/sim.8293
+            "
+          ),
+          p(
+            class = "hangingindent",
+            "Perrier, V., Meyer, F., and Granjon, D. (2022). shinyWidgets: Custom
+            inputs widgets for shiny. (v 0.7.0). [R package]. Available from
+            https://CRAN.R-project.org/package=shinyWidgets"
+          ),
+          p(
+            class = "hangingindent",
+            "Wickham, H., François, R., Henry, L., Müller, K. (2022). dplyr: A 
+            Grammar of Data Manipulation. (v 1.0.9).[R package]. Available from 
+            https://dplyr.tidyverse.org"
+          ),
+          p(
+            class = "hangingindent",
+            "Wickham, H. (2016). ggplot2: Elegant graphics for data analysis.
+            Springer-Verlag:New York. (v 3.3.6) [R package]. Available from
+            https://ggplot2.tidyverse.org"
           ),
           br(),
           br(),
@@ -220,9 +393,11 @@ ui <- list(
   )
 )
 
+
+
 # Define server logic ----
 server <- function(input, output, session) {
-
+  
   ## Set up Info button ----
   observeEvent(
     eventExpr = input$info,
@@ -231,12 +406,831 @@ server <- function(input, output, session) {
         session = session,
         type = "info",
         title = "Information",
-        text = "This App Template will help you get started building your own app"
+        text = "This app can explore p-value function in different situations 
+        or do a two-tailed hypothesis test for one single sample"
       )
     }
   )
-
+  ## set buttons----
+  ### explore button
+  observeEvent(
+    eventExpr = input$go,
+    handlerExpr = {
+      updateTabItems(
+        session = session,
+        inputId = "pages",
+        selected = "explore"
+      )
+    }
+  )
+  ### simulate button proportion
+  observeEvent(
+    eventExpr = input$simforp,
+    handlerExpr = {
+      updateButton(
+        session = session,
+        inputId = "simforp",
+        label = "Re-simulate!",
+        style = "default",
+        disabled = FALSE 
+      )
+    }
+  )
+  ### simulation button mean
+  observeEvent(
+    eventExpr = input$sim,
+    handlerExpr = {
+      updateButton(
+        session = session,
+        inputId = "sim",
+        label = "Re-simulate!",
+        style = "default",
+        disabled = FALSE
+      )
+    }
+  )
+  
+  ## update inputs values----
+  ## population selection
+  
+  selection<-eventReactive(
+    eventExpr = c(input$sim,input$simforp),
+    valueExpr = {
+      
+      if(input$whichtype=='mean'){
+        
+        value<-input$types}
+      
+      if(input$whichtype=='pro'){
+        
+        value<-input$binomial}
+      
+      return(value)
+    }
+  )
+  
+  
+  ### update theta0 of Mean
+  output$choosetheta0<-renderUI({
+    if(input$types == 'Poisson'){
+      theta0<-
+        sliderInput(
+          inputId = "theta0",
+          label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
+          min = 0,
+          max = 50,
+          value = 25,
+          step = 1)
+    }
+    if(input$types == 'Normal'){
+      theta0<-
+        sliderInput(
+          inputId = "theta0",
+          label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
+          min = 0,
+          max = 120,
+          value = 90,
+          step = 1)
+    }  
+    if(input$types == 'Uniform'){
+      theta0<-
+        sliderInput(
+          inputId = "theta0",
+          label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
+          min = 0,
+          max = 120,
+          value = 60,
+          step = 1)
+    }
+    return(theta0)
+  })
+  
+  ### update sd of normal
+  output$choosepopsd<-renderUI({
+    if(input$types == 'Normal'){
+      
+      numericInput(
+        inputId = "norsd",
+        label = tags$div(
+          tags$strong("Standard deviation"),
+          HTML("&sigma;")
+        ),
+        min = 1,
+        max = 50, 
+        value = 10,
+        step = 1)
+    }
+  }
+  )
+  
+  ### update popsd of Mean
+  getpopsd<-function(selection){
+    #default value
+    if(selection=='Binomial'){
+      popsd<-1
+    }
+    if(selection=='Poisson'){
+      popsd<-sqrt(25)
+    }
+    if(selection=='Normal'){
+      popsd<-input$norsd
+    }
+    if(selection=='Uniform'){
+      popsd<-sqrt(1200)
+    }
+    return(popsd)
+  }
+  
+  
+  ### update some statistics
+  ### proportion part 
+  theta0p<-
+    eventReactive(
+      eventExpr = input$simforp,
+      valueExpr = {
+        input$theta0ofp
+      }
+    )
+  
+  np<-
+    eventReactive(
+      eventExpr = input$simforp,
+      valueExpr = {
+        input$nofp
+      }
+    )
+  
+  clp<-
+    eventReactive(
+      eventExpr = input$simforp,
+      valueExpr = {
+        input$clofp
+      }
+    )
+  
+  sampledatap<-
+    eventReactive(
+      eventExpr = input$simforp,
+      valueExpr = {
+        getsample(selection(),np())
+      }
+    )
+  
+  successp<-
+    eventReactive(
+      eventExpr = input$simforp,
+      valueExpr = {
+        sum(sampledatap())
+      }
+    )
+  
+  phatp<-
+    eventReactive(
+      eventExpr = input$simforp,
+      valueExpr = {
+        round(mean(sampledatap()),3)
+      }
+    )
+  
+  ### mean part
+  popsd<-
+    eventReactive(
+      eventExpr = input$sim,
+      valueExpr = {
+        getpopsd(selection())
+      }
+    )
+  
+  norsd<-
+    eventReactive(
+      eventExpr = input$sim,
+      valueExpr = {
+        input$norsd
+      }
+    )
+  
+  theta0<-
+    eventReactive(
+      eventExpr = input$sim,
+      valueExpr = {
+        input$theta0
+        
+      }
+    )
+  
+  n<-
+    eventReactive(
+      eventExpr = input$sim,
+      valueExpr = {
+        input$n
+        
+      }
+    )
+  
+  cl<-
+    eventReactive(
+      eventExpr = input$sim,
+      valueExpr = {
+        input$cl
+        
+      }
+    )
+  
+  sampledata<-
+    eventReactive(
+      eventExpr = input$sim,
+      valueExpr = {
+        getsample(input$types,input$n,popsd())
+        
+      }
+    )
+  
+  meanhat<-
+    eventReactive(
+      eventExpr = input$sim,
+      valueExpr = {
+        round(mean(sampledata()),3)
+        
+      }
+    )
+  
+  ### error message
+  observeEvent(
+    eventExpr = input$sim ,
+    handlerExpr = {
+      if(input$cl>=1 || input$cl<=0 || popsd() <=0 ){
+        sendSweetAlert(
+          session = session,
+          type = "error",
+          title = "Error: Please check your inputs",
+          text = tags$div(
+            p("Invalid confidence level", tags$strong("AND/OR") ),
+            p("Invalid population standard deviation")
+          ),
+          html = TRUE 
+        )
+      }
+    }
+  )
+  
+  observeEvent(
+    eventExpr =  input$simforp,
+    handlerExpr = {
+      if(input$clofp>=1 || input$clofp<=0 ){
+        sendSweetAlert(
+          session = session,
+          type = "error",
+          title = "Error: Please check your inputs",
+          text = tags$div(
+            p("Invalid confidence level")
+          ),
+          html = TRUE 
+        )
+      }
+    }
+  )
+  
+  ### update p-value
+  getpvalue<-function(selection){
+    if(selection=='Binomial'){
+      p_value<-binom.exact(
+        x = successp(),
+        n = np(),
+        p = theta0p(),
+        alternative="two.side",
+        tsmethod = "central"
+      )$p.value
+    }
+    if(selection=='Poisson'){
+      p_value<-poisson.exact(
+        x = sum(sampledata()),
+        T = n(),
+        r = theta0(),
+        alternative = "two.side",
+        tsmethod = "central"
+      )$p.value
+    }
+    if(selection=='Normal'||selection=='Uniform'){
+      z_score<-(meanhat()-theta0())/(popsd()/sqrt(n()))
+      p_value<-2*pnorm(-abs(z_score))
+    }
+    
+    return(round(p_value,3))
+    
+  }
+  
+  #### show sample data
+  observeEvent(
+    eventExpr = input$simforp,
+    handlerExpr = {
+      output$sampledataPop<-renderUI(
+        withMathJax(
+          p("Sample Data:"),
+          p("\\(n =\\) ", np()),
+          p("\\(x =\\) ", successp()),
+          p("\\(\\hat{p} =\\) ", phatp()),
+          helpText(
+            paste0("Assumptions \\( n\\hat{p} \\geq 5\\) and \\( n(1-\\hat{p}) \\geq 5\\)", 
+                   ifelse(np() * phatp() >= 5 & np() * (1 - phatp()) >= 5, " are met.", " are not met.")))
+        )
+      )
+    }
+  )
+  
+  
+  observeEvent(
+    eventExpr = input$sim,
+    handlerExpr = {
+      output$sampledataMean<-renderUI({
+        validate(
+          need( popsd()> 0 || selection() =="Uniform" ||selection() =="Poisson",
+                message = "Please input a valid standard error"
+          )
+        )
+        withMathJax(
+          p("Sample Data:"),
+          p("\\(n =\\) ", n()),
+          p("\\(\\bar{x} =\\) ", meanhat()),
+          p("\\(\\sigma =\\) ", round(popsd(),3))
+        )
+      }
+      )
+    }
+  )
+  
+  
+  #### plots----
+  
+  output$pfunctionMean<-renderPlot({
+    validate(
+      need(cl() > 0 && cl() < 1,
+           message = "Please input a valid confidence level"
+      ),
+      need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+           message = "Please input a valid standard error"
+      )
+    )
+    if(selection()=='Poisson'){
+      alpha<-1-cl()
+      ### calculate p-value 
+      p_value<-getpvalue(selection())
+      ### ci
+      ci<-poisson.exact(
+        x = sum(sampledata()),
+        T = n(),
+        r = theta0(),
+        alternative = "two.side",
+        tsmethod = "central",
+        conf.level = cl()
+      )$conf.int
+      ### set xlim
+      cimax<-poisson.exact(
+        x = sum(sampledata()),
+        T = n(),
+        r = theta0(),
+        alternative = "two.side",
+        tsmethod = "central",
+        conf.level = 0.999
+      )$conf.int
+      
+      xlim<-c(max(0,cimax[1]),cimax[2])
+      
+      ### get p-values list
+      change<-(xlim[2]-xlim[1])/1500
+      theta<-xlim[1]
+      pvaluelist<-c()
+      thetalist<-c()
+      genepvalues<-function(theta){
+        poisson.exact(
+          x = sum(sampledata()),
+          T = n(),
+          r = theta,
+          alternative = "two.side",
+          tsmethod = "central",
+          conf.level = 0.99
+        )$p.value
+      }
+      while(theta<=xlim[2]){
+        pvalues<-genepvalues(theta)
+        pvaluelist<-c(pvaluelist,pvalues)
+        thetalist<-c(thetalist,theta)
+        theta<-theta+change
+      }
+      ### plot
+      data<-as.data.frame(cbind(thetalist,pvaluelist))
+      data<-rename(data,theta=thetalist)
+      data<-rename(data,p_value=pvaluelist)
+      g1<-
+        ggplot()+
+        geom_line(
+          data=data,
+          mapping = aes(x=theta,y=p_value)
+        )+
+        lims(
+          x=xlim,
+          y=c(0,1)
+        )+
+        labs(
+          title = "P-value Function",
+          x = "Null hypothesis mean", 
+          y = "P-value",
+          alt = "A plot of a set of p values versus different means "
+        )+
+        geom_segment(
+          aes(x = ci[1], y = alpha, xend = ci[2], yend = alpha, colour = "Confidence interval"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = ci[2], y = 0, xend = ci[2], yend = alpha, colour = "Confidence interval"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = ci[1], y = 0, xend = ci[1], yend = alpha, colour = "Confidence interval"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = xlim[1], y = 1, xend = meanhat(), yend = 1, colour = "Observed estimate"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = xlim[1], y = p_value, xend = theta0(), yend = p_value, colour = "Null value"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = theta0(), y = 0, xend = theta0(), yend = p_value, colour = "Null value"),
+          size = 1
+        )+
+        scale_color_manual(
+          name = NULL,
+          values = c(
+            "Confidence interval" = psuPalette[1],
+            "Observed estimate" = boastPalette[3],
+            "Null value" = "black"
+          )
+        )+
+        theme_bw()+
+        theme(
+          plot.caption = element_text(size = 18),
+          text = element_text(size = 18),
+          axis.title = element_text(size = 16),
+          legend.position = "bottom"
+        )
+      
+      return(g1)
+    }
+    # other two
+    if(selection()=='Normal'||selection()=='Uniform'){
+      alpha<-1-cl()
+      ### calculate p value
+      p_value<-getpvalue(selection())
+      ### set xlim
+      genelimit<-function(){
+        lowerboundmax<-meanhat()+qnorm(0.001/2)*(popsd()/sqrt(n()))
+        upperboundmax<-meanhat()+qnorm(1-0.001/2)*(popsd()/sqrt(n()))
+        limit<-c(lowerboundmax,upperboundmax)
+        return(limit)
+      }
+      
+      lowerboundmax<-genelimit()[1]
+      upperboundmax<-genelimit()[2]
+      
+      genepvalues<-function(theta){
+        
+        z_score<-(meanhat()-theta)/(popsd()/sqrt(n()))
+        p_value<-2*pnorm(-abs(z_score))
+        
+        return(p_value)
+      }
+      
+      #ci
+      getci<-function(alpha){
+        
+        lowerbound<-meanhat()+qnorm(alpha/2)*(popsd()/sqrt(n()))
+        upperbound<-meanhat()+qnorm(1-alpha/2)*(popsd()/sqrt(n()))
+        bound<-c(lowerbound,upperbound)
+        
+        return(bound)
+      }
+      
+      ### lower bound should larger than 0 
+      lowerbound<-max(0,getci(alpha)[1])
+      upperbound<-getci(alpha)[2]
+      ci<-c(lowerbound,upperbound)
+      
+      ### get p-value list
+      thetarange<-c(lowerboundmax,upperboundmax)
+      changetheta<-diff(thetarange)/1500
+      theta<-lowerboundmax
+      pvaluelist<-c()
+      thetalist<-c()
+      while(theta<=upperboundmax){
+        pvalues<-genepvalues(theta)
+        pvaluelist<-c(pvaluelist,pvalues)
+        thetalist<-c(thetalist,theta)
+        theta=theta+changetheta}
+      
+      
+      ### basic plot
+      xlim<-c(max(0,lowerboundmax),upperboundmax)
+      
+      ###plot
+      data<-as.data.frame(cbind(thetalist,pvaluelist))
+      data<-rename(data,theta=thetalist)
+      data<-rename(data,p_value=pvaluelist)
+      g2<-
+        ggplot()+
+        geom_line(
+          data=data,
+          mapping = aes(x=theta,y=p_value)
+        )+
+        lims(
+          x=xlim,
+          y=c(0,1)
+        )+
+        labs(
+          title = "P-value Function",
+          x = "Null hypothesis mean", 
+          y = "P-value",
+          alt = "A plot of a set of p values versus different means "
+        )+
+        geom_segment(
+          aes(x = ci[1], y = alpha, xend = ci[2], yend = alpha, colour = "Confidence interval"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = ci[2], y = 0, xend = ci[2], yend = alpha, colour = "Confidence interval"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = ci[1], y = 0, xend = ci[1], yend = alpha, colour = "Confidence interval"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = xlim[1], y = 1, xend = meanhat(), yend = 1, colour = "Observed estimate"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = xlim[1], y = p_value, xend = theta0(), yend = p_value, colour = "Null value"),
+          size = 1
+        )+
+        geom_segment(
+          aes(x = theta0(), y = 0, xend = theta0(), yend = p_value, colour = "Null value"),
+          size = 1
+        )+
+        scale_color_manual(
+          name=NULL,
+          values = c(
+            "Confidence interval" = psuPalette[1],
+            "Observed estimate" = boastPalette[3],
+            "Null value" = "black"
+          )
+        )+
+        theme_bw()+
+        theme(
+          plot.caption = element_text(size = 18),
+          text = element_text(size = 18),
+          axis.title = element_text(size = 16),
+          legend.position = "bottom"
+        )
+      
+      return(g2)
+    }
+  }
+  )
+  
+  observeEvent(
+    eventExpr = input$sim,
+    handlerExpr = {
+      output$sampledist<-renderPlot(
+        isolate({
+          validate(
+            need(cl() > 0 && cl() < 1,
+                 message = "Please input a valid confidence level"
+            ),
+            need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+                 message = "Please input a valid standard error"
+            )
+          )
+          getsampling(selection(),input$theta0,input$n,popsd())
+        }
+        )
+      )
+    }
+  )
+  
+  output$pfunctionPop<-renderPlot({
+    validate(
+      need(clp() > 0 && clp() < 1,
+           message = "Please input a valid confidence level"
+      )
+    )
+    alphaP<-1-clp()
+    ### calculate pvalue
+    p_value<-getpvalue(selection())
+    ### ci
+    ciP<-binom.exact(
+      x = successp(),
+      n = np(),
+      p = theta0p(),
+      alternative = "two.side",
+      tsmethod = "central",
+      conf.level = clp()
+    )$conf.int
+    ### set xlim
+    cimaxP<-binom.exact(
+      x = successp(),
+      n = np(),
+      p = theta0p(),
+      alternative="two.side",
+      tsmethod = "central",
+      conf.level = 0.999
+    )$conf.int
+    
+    xlimP<-c(max(0,cimaxP[1]),cimaxP[2])
+    
+    ### get p-value list
+    changeP<-(xlimP[2]-xlimP[1])/1500
+    thetaP<-xlimP[1]
+    pvaluelistP<-c()
+    thetalistP<-c()
+    genepvaluesP<-function(thetaP){
+      binom.exact(
+        x = successp(),
+        n = np(),
+        p = thetaP,
+        alternative="two.side",
+        tsmethod="central"
+      )$p.value
+    }
+    while(thetaP<=xlimP[2]){
+      pvaluesP<-genepvaluesP(thetaP)
+      pvaluelistP<-c(pvaluelistP,pvaluesP)
+      thetalistP<-c(thetalistP,thetaP)
+      thetaP<-thetaP+changeP
+    }
+    
+    ### plot
+    data<-as.data.frame(cbind(thetalistP,pvaluelistP))
+    data<-rename(data,theta=thetalistP)
+    data<-rename(data,p_value=pvaluelistP)
+    gP<-
+      ggplot()+
+      geom_line(
+        data=data,
+        mapping = aes(x=theta,y=p_value)
+      )+
+      lims(
+        x=xlimP,
+        y=c(0,1)
+      )+
+      labs(
+        title = "P-value Function",
+        x = "Null hypothesis proportion", 
+        y = "P-value",
+        alt = "A plot of a set of p values versus different proportions "
+      )+
+      geom_segment(
+        aes(x = ciP[1], y = alphaP, xend = ciP[2], yend = alphaP, colour = "Confidence interval"),
+        size = 1
+      )+
+      geom_segment(
+        aes(x = ciP[2], y = 0, xend = ciP[2], yend = alphaP, colour = "Confidence interval"),
+        size = 1
+      )+
+      geom_segment(
+        aes(x = ciP[1], y = 0, xend = ciP[1], yend = alphaP, colour = "Confidence interval"),
+        size = 1
+      )+
+      geom_segment(
+        aes(x = xlimP[1], y = 1, xend = phatp(), yend = 1, colour = "Observed estimate"),
+        size = 1
+      )+
+      geom_segment(
+        aes(x = xlimP[1], y = p_value, xend = theta0p(), yend = p_value, colour = "Null value"),
+        size = 1
+      )+
+      geom_segment(
+        aes(x = theta0p(), y = 0, xend = theta0p(), yend = p_value, colour = "Null value"),
+        size = 1
+      )+
+      scale_color_manual(
+        name = NULL,
+        values = c(
+          "Confidence interval" = psuPalette[1],
+          "Observed estimate" = boastPalette[3],
+          "Null value" = "black"
+        )
+      )+
+      theme_bw()+
+      theme(
+        plot.caption = element_text(size = 18),
+        text = element_text(size = 18),
+        axis.title = element_text(size = 16),
+        legend.position = "bottom"
+      )
+    
+    return(gP)
+  })
+  
+  observeEvent(
+    eventExpr = input$simforp,
+    handlerExpr = {
+      output$sampledistPop<-renderPlot(
+        isolate({
+          validate(
+            need(clp() > 0 && clp() < 1,
+                 message = "Please input a valid confidence level"
+            )
+          )
+          getsampling(selection(),input$theta0ofp,input$nofp)
+        }
+        )
+      )
+    }
+  )
+  
+  ### table----
+  observeEvent(
+    eventExpr = input$simforp,
+    
+    handlerExpr = {
+      output$pvaluePop<-renderTable(
+        isolate({
+          validate(
+            need(input$clofp > 0 && input$clofp < 1,
+                 message = "Please input a valid confidence level"
+            )
+          )
+          
+          p_value<-getpvalue(selection())
+          ciP<-binom.exact(
+            x = successp(),
+            n = input$nofp,
+            p = input$theta0ofp,
+            alternative="two.side",
+            tsmethod = "central",
+            conf.level = input$clofp
+          )$conf.int
+          ctable<-matrix(c(phatp(),p_value,ciP[1],ciP[2]),nrow=1)
+          colnames(ctable)<-c("Sample proportion","P-value","Lower bound","Upper bound")
+          ctable
+        }
+        )
+      )
+    }
+  )
+  
+  observeEvent(
+    eventExpr = input$sim,
+    handlerExpr = {
+      output$pvalue<-renderTable(
+        isolate({
+          validate(
+            need(input$cl > 0 && input$cl < 1,
+                 message = "Please input a valid confidence level"
+            ),
+            need(input$norsd > 0 || selection()=="Uniform"|| selection()=="Poisson",
+                 message = "Please input a valid standard error"
+            ) 
+          )
+          
+          if(selection()=="Poisson"){
+            p_value<-getpvalue(selection())
+            ci<-poisson.exact(
+              x = sum(sampledata()),
+              T = input$n,
+              r = input$theta0,
+              alternative = "two.side",
+              tsmethod = "central",
+              conf.level = input$cl
+            )$conf.int
+            ctable<-matrix(c(meanhat(),p_value,ci[1],ci[2]),nrow=1)
+            colnames(ctable)<-c("Sample mean","P-value","Lower bound","Upper bound")
+            return(ctable)
+          }
+          
+          if(selection()=="Normal" || selection()=="Uniform"){
+            p_value<-getpvalue(selection())
+            getci<-function(alpha){
+              lowerbound<-meanhat()+qnorm(alpha/2)*(popsd()/sqrt(input$n))
+              upperbound<-meanhat()+qnorm(1-alpha/2)*(popsd()/sqrt(input$n))
+              bound<-c(lowerbound,upperbound)
+              return(bound)
+            }
+            alpha<-1-input$cl
+            ctable<-matrix(c(meanhat(),p_value,max(0,getci(alpha)[1]),getci(alpha)[2]),nrow=1)
+            colnames(ctable)<-c("Sample mean","P-value","Lower bound","Upper bound")
+            return(ctable)
+          }
+        }
+        )
+      )
+    }
+  )
+  
+  
 }
 
+
 # Boast App Call ----
-boastUtils::boastApp(ui = ui, server = server)
+boastApp(ui = ui, server = server)
