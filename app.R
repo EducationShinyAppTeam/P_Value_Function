@@ -176,7 +176,7 @@ ui <- list(
                       width = '100%'),
                     #confidence level
                     tags$strong("Confidence level"),
-                    numericInput(
+                    sliderInput(
                       inputId = "clofp",
                       label = HTML(paste("1 - ","&alpha;")),
                       min = 0.8,
@@ -258,7 +258,7 @@ ui <- list(
                     br(),
                     #confidence level
                     tags$strong("Confidence level"),
-                    numericInput(
+                    sliderInput(
                       inputId = "cl",
                       label = HTML(paste("1 - ","&alpha;")),
                       min = 0.8,
@@ -469,12 +469,6 @@ server <- function(input, output, session) {
     }
   )
 
-  output$testp<-renderUI({
-    selection()
-  })
-  output$testm<-renderUI({
-    selection()
-  })
   ### update theta0 of Mean
   output$choosetheta0<-renderUI({
     if(input$types == 'Poisson'){
@@ -626,37 +620,17 @@ server <- function(input, output, session) {
   observeEvent(
     eventExpr = input$sim ,
     handlerExpr = {
-      if(cl()>=1 || cl()<=0 || popsd() <=0 ){
+      if(popsd() <=0 ){
         sendSweetAlert(
           session = session,
           type = "error",
-          title = "Error: Please check your inputs",
-          text = tags$div(
-            p("Invalid confidence level", tags$strong("AND/OR") ),
-            p("Invalid population standard deviation")
-          ),
+          title = "Error: Please check your standard deviation",
           html = TRUE 
         )
       }
     }
   )
   
-  observeEvent(
-    eventExpr =  input$simforp,
-    handlerExpr = {
-      if(clp()>=1 || clp()<=0 ){
-        sendSweetAlert(
-          session = session,
-          type = "error",
-          title = "Error: Please check your inputs",
-          text = tags$div(
-            p("Invalid confidence level")
-          ),
-          html = TRUE 
-        )
-      }
-    }
-  )
   
   ### update p-value
   getpvalue<-function(selection){
@@ -688,63 +662,45 @@ server <- function(input, output, session) {
   }
   
   #### show sample data
-  observeEvent(
-    eventExpr = input$simforp,
-    handlerExpr = {
-      output$sampledataPop<-renderUI({
-        validate(
-          need(
-            expr=selection()=='Binomial',
-            message = ""
-          )
-        )
-        validate(
-          need(clp() > 0 && clp() < 1,
-               message = ""
-          )
-        )
-        withMathJax(
-          p("Sample Data"),
-          p("\\(n =\\) ", np()),
-          p("\\(x =\\) ", successp()),
-          p("\\(\\hat{p} =\\) ", phatp()),
-          helpText(
-            paste0("Assumptions \\( n\\hat{p} \\geq 5\\) and \\( n(1-\\hat{p}) \\geq 5\\)", 
-                   ifelse(np() * phatp() >= 5 & np() * (1 - phatp()) >= 5, " are met.", " are not met.")))
-        )
-      }
+  output$sampledataPop<-renderUI({
+    validate(
+      need(
+        expr=selection()=='Binomial',
+        message = ""
       )
-    }
+    )
+    withMathJax(
+      p("Sample Data"),
+      p("\\(n =\\) ", np()),
+      p("\\(x =\\) ", successp()),
+      p("\\(\\hat{p} =\\) ", phatp()),
+      helpText(
+        paste0("Assumptions \\( n\\hat{p} \\geq 5\\) and \\( n(1-\\hat{p}) \\geq 5\\)", 
+               ifelse(np() * phatp() >= 5 & np() * (1 - phatp()) >= 5, " are met.", " are not met.")))
+    )
+  }
   )
   
   
-  observeEvent(
-    eventExpr = input$sim,
-    handlerExpr = {
-      output$sampledataMean<-renderUI({
-        validate(
-          need(
-            expr=selection()!='Binomial',
-            message = ""
-          )
-        )
-        validate(
-          need(cl() > 0 && cl() < 1,
-               message = ""
-          ),
-          need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
-               message = ""
-          ) 
-        )
-        withMathJax(
-          p("Sample Data"),
-          p("\\(n =\\) ", n()),
-          p("\\(\\bar{x} =\\) ", meanhat()),
-          p("\\(\\sigma =\\) ", round(popsd(),3))
-        )
-      }
+  output$sampledataMean<-renderUI({
+    validate(
+      need(
+        expr=selection()!='Binomial',
+        message = ""
       )
-    }
+    )
+    validate(
+      need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+           message = ""
+      ) 
+    )
+    withMathJax(
+      p("Sample Data"),
+      p("\\(n =\\) ", n()),
+      p("\\(\\bar{x} =\\) ", meanhat()),
+      p("\\(\\sigma =\\) ", round(popsd(),3))
+    )
+  }
   )
   
   
@@ -758,10 +714,6 @@ server <- function(input, output, session) {
       )
     )
     validate(
-      need(
-        expr=cl() > 0 && cl() < 1,
-        message = "Please input a valid confidence level"
-      ),
       need(
         expr=norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
         message = "Please input a valid standard error"
@@ -1018,10 +970,6 @@ server <- function(input, output, session) {
     )
     validate(
       need(
-        expr=cl() > 0 && cl() < 1,
-        message = "Please input a valid confidence level"
-      ),
-      need(
         expr=norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
         message = "Please input a valid standard error"
       )
@@ -1034,11 +982,6 @@ server <- function(input, output, session) {
       need(
         expr=selection()=='Binomial',
         message = "Set parameters and press the Simulate button!"
-      )
-    )
-    validate(
-      need(clp() > 0 && clp() < 1,
-           message = "Please input a valid confidence level"
       )
     )
     alphaP<-1-clp()
@@ -1163,11 +1106,6 @@ server <- function(input, output, session) {
         message = "Set parameters and press the Simulate button!"
       )
     )
-    validate(
-      need(clp() > 0 && clp() < 1,
-           message = "Please input a valid confidence level"
-      )
-    )
     getsampling(selection(),theta0p(),np())
   }
   )
@@ -1178,11 +1116,6 @@ server <- function(input, output, session) {
       need(
         expr=selection()=='Binomial',
         message = ""
-      )
-    )
-    validate(
-      need(clp() > 0 && clp() < 1,
-           message = ""
       )
     )
     
@@ -1209,9 +1142,6 @@ server <- function(input, output, session) {
      )
    )
    validate(
-     need(cl() > 0 && cl() < 1,
-          message = ""
-     ),
      need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
           message = ""
      ) 
