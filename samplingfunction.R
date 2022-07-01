@@ -18,7 +18,7 @@ getsampling<-function(selection,theta,n,popsd){
   
   ## single proportion----
   if(selection=='Binomial'){
-    samplingdata<- rnorm(100000,mean=theta,sd=sqrt(theta*(1-theta)/n))
+    samplingdata<- rnorm(30000,mean=theta,sd=sqrt(theta*(1-theta)/n))
     ggplot(
       data = as.data.frame(samplingdata),
       mapping = aes(x = samplingdata)
@@ -63,7 +63,7 @@ getsampling<-function(selection,theta,n,popsd){
   }
   ## single mean----
   else{
-    samplingdata<- rnorm(100000,mean=theta,sd=(popsd/sqrt(n)))
+    samplingdata<- rnorm(30000,mean=theta,sd=(popsd/sqrt(n)))
     ggplot(
       data = as.data.frame(samplingdata),
       mapping = aes(x = samplingdata)

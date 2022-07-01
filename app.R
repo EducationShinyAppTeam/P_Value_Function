@@ -227,14 +227,14 @@ ui <- list(
                   offset = 0,
                   plotOutput("pfunctionPop"),
                   br(),
-                  plotOutput("sampledistPop"),
-                  br(),
                   checkboxInput("resultsPop",
                                 "Show test results", FALSE),
                   conditionalPanel(
                     condition = "input.resultsPop==1",
                     tableOutput("pvaluePop")
-                  )
+                  ),
+                  br(),
+                  plotOutput("sampledistPop")
                 )
               ),
               ##### Testing for single mean ----
@@ -305,14 +305,14 @@ ui <- list(
                   offset = 0,
                   plotOutput("pfunctionMean"),
                   br(),
-                  plotOutput("sampledist"),
-                  br(),
                   checkboxInput("resultsMean",
                                 "Show test results", FALSE),
                   conditionalPanel(
                     condition = "input.resultsMean==1",
                     tableOutput("pvalue")
-                  )
+                  ),
+                  br(),
+                  plotOutput("sampledist")
                 )
               )
             )
@@ -468,8 +468,13 @@ server <- function(input, output, session) {
       return(value)
     }
   )
-  
-  
+
+  output$testp<-renderUI({
+    selection()
+  })
+  output$testm<-renderUI({
+    selection()
+  })
   ### update theta0 of Mean
   output$choosetheta0<-renderUI({
     if(input$types == 'Poisson'){
@@ -508,7 +513,6 @@ server <- function(input, output, session) {
   ### update sd of normal
   output$choosepopsd<-renderUI({
     if(input$types == 'Normal'){
-      
       numericInput(
         inputId = "norsd",
         label = tags$div(
@@ -525,7 +529,7 @@ server <- function(input, output, session) {
   
   ### update popsd of Mean
   getpopsd<-function(selection){
-    #default value
+    # default value
     if(selection=='Binomial'){
       popsd<-1
     }
@@ -533,7 +537,7 @@ server <- function(input, output, session) {
       popsd<-sqrt(25)
     }
     if(selection=='Normal'){
-      popsd<-input$norsd
+      popsd<-norsd()
     }
     if(selection=='Uniform'){
       popsd<-sqrt(1200)
@@ -568,38 +572,15 @@ server <- function(input, output, session) {
       }
     )
   
-  sampledatap<-
-    eventReactive(
-      eventExpr = input$simforp,
-      valueExpr = {
-        getsample(selection(),np())
-      }
-    )
+  sampledatap<-reactive(getsample(selection(),np()))
   
-  successp<-
-    eventReactive(
-      eventExpr = input$simforp,
-      valueExpr = {
-        sum(sampledatap())
-      }
-    )
+  successp<-reactive(sum(sampledatap()))
   
-  phatp<-
-    eventReactive(
-      eventExpr = input$simforp,
-      valueExpr = {
-        round(mean(sampledatap()),3)
-      }
-    )
+  phatp<-reactive(round(mean(sampledatap()),3))
   
   ### mean part
-  popsd<-
-    eventReactive(
-      eventExpr = input$sim,
-      valueExpr = {
-        getpopsd(selection())
-      }
-    )
+ 
+  popsd<-reactive(getpopsd(selection()))
   
   norsd<-
     eventReactive(
@@ -636,29 +617,16 @@ server <- function(input, output, session) {
       }
     )
   
-  sampledata<-
-    eventReactive(
-      eventExpr = input$sim,
-      valueExpr = {
-        getsample(input$types,input$n,popsd())
+  sampledata<-reactive(getsample(selection(),n(),popsd()))
         
-      }
-    )
-  
-  meanhat<-
-    eventReactive(
-      eventExpr = input$sim,
-      valueExpr = {
-        round(mean(sampledata()),3)
+  meanhat<-reactive(round(mean(sampledata()),3))
         
-      }
-    )
   
   ### error message
   observeEvent(
     eventExpr = input$sim ,
     handlerExpr = {
-      if(input$cl>=1 || input$cl<=0 || popsd() <=0 ){
+      if(cl()>=1 || cl()<=0 || popsd() <=0 ){
         sendSweetAlert(
           session = session,
           type = "error",
@@ -676,7 +644,7 @@ server <- function(input, output, session) {
   observeEvent(
     eventExpr =  input$simforp,
     handlerExpr = {
-      if(input$clofp>=1 || input$clofp<=0 ){
+      if(clp()>=1 || clp()<=0 ){
         sendSweetAlert(
           session = session,
           type = "error",
@@ -723,9 +691,20 @@ server <- function(input, output, session) {
   observeEvent(
     eventExpr = input$simforp,
     handlerExpr = {
-      output$sampledataPop<-renderUI(
+      output$sampledataPop<-renderUI({
+        validate(
+          need(
+            expr=selection()=='Binomial',
+            message = ""
+          )
+        )
+        validate(
+          need(clp() > 0 && clp() < 1,
+               message = ""
+          )
+        )
         withMathJax(
-          p("Sample Data:"),
+          p("Sample Data"),
           p("\\(n =\\) ", np()),
           p("\\(x =\\) ", successp()),
           p("\\(\\hat{p} =\\) ", phatp()),
@@ -733,6 +712,7 @@ server <- function(input, output, session) {
             paste0("Assumptions \\( n\\hat{p} \\geq 5\\) and \\( n(1-\\hat{p}) \\geq 5\\)", 
                    ifelse(np() * phatp() >= 5 & np() * (1 - phatp()) >= 5, " are met.", " are not met.")))
         )
+      }
       )
     }
   )
@@ -743,12 +723,21 @@ server <- function(input, output, session) {
     handlerExpr = {
       output$sampledataMean<-renderUI({
         validate(
-          need( popsd()> 0 || selection() =="Uniform" ||selection() =="Poisson",
-                message = "Please input a valid standard error"
+          need(
+            expr=selection()!='Binomial',
+            message = ""
           )
         )
+        validate(
+          need(cl() > 0 && cl() < 1,
+               message = ""
+          ),
+          need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+               message = ""
+          ) 
+        )
         withMathJax(
-          p("Sample Data:"),
+          p("Sample Data"),
           p("\\(n =\\) ", n()),
           p("\\(\\bar{x} =\\) ", meanhat()),
           p("\\(\\sigma =\\) ", round(popsd(),3))
@@ -763,11 +752,19 @@ server <- function(input, output, session) {
   
   output$pfunctionMean<-renderPlot({
     validate(
-      need(cl() > 0 && cl() < 1,
-           message = "Please input a valid confidence level"
+      need(
+        expr=selection()!='Binomial',
+        message = "Set parameters and press the Simulate button!"
+      )
+    )
+    validate(
+      need(
+        expr=cl() > 0 && cl() < 1,
+        message = "Please input a valid confidence level"
       ),
-      need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
-           message = "Please input a valid standard error"
+      need(
+        expr=norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+        message = "Please input a valid standard error"
       )
     )
     if(selection()=='Poisson'){
@@ -824,7 +821,10 @@ server <- function(input, output, session) {
         ggplot()+
         geom_line(
           data=data,
-          mapping = aes(x=theta,y=p_value)
+          mapping = aes(x=theta,y=p_value),
+          color="blue",
+          size=2,
+          alpha=0.5
         )+
         lims(
           x=xlim,
@@ -853,6 +853,10 @@ server <- function(input, output, session) {
           size = 1
         )+
         geom_segment(
+          aes(x = meanhat(), y = 0, xend = meanhat(), yend = 1, colour = "Observed estimate"),
+          size = 1
+        )+
+        geom_segment(
           aes(x = xlim[1], y = p_value, xend = theta0(), yend = p_value, colour = "Null value"),
           size = 1
         )+
@@ -864,7 +868,7 @@ server <- function(input, output, session) {
           name = NULL,
           values = c(
             "Confidence interval" = psuPalette[1],
-            "Observed estimate" = boastPalette[3],
+            "Observed estimate" = psuPalette[4],
             "Null value" = "black"
           )
         )+
@@ -941,7 +945,10 @@ server <- function(input, output, session) {
         ggplot()+
         geom_line(
           data=data,
-          mapping = aes(x=theta,y=p_value)
+          mapping = aes(x=theta,y=p_value),
+          color="blue",
+          size=2,
+          alpha=0.5
         )+
         lims(
           x=xlim,
@@ -970,6 +977,10 @@ server <- function(input, output, session) {
           size = 1
         )+
         geom_segment(
+          aes(x = meanhat(), y = 0, xend = meanhat(), yend = 1, colour = "Observed estimate"),
+          size = 1
+        )+
+        geom_segment(
           aes(x = xlim[1], y = p_value, xend = theta0(), yend = p_value, colour = "Null value"),
           size = 1
         )+
@@ -981,7 +992,7 @@ server <- function(input, output, session) {
           name=NULL,
           values = c(
             "Confidence interval" = psuPalette[1],
-            "Observed estimate" = boastPalette[3],
+            "Observed estimate" = psuPalette[4],
             "Null value" = "black"
           )
         )+
@@ -998,27 +1009,33 @@ server <- function(input, output, session) {
   }
   )
   
-  observeEvent(
-    eventExpr = input$sim,
-    handlerExpr = {
-      output$sampledist<-renderPlot(
-        isolate({
-          validate(
-            need(cl() > 0 && cl() < 1,
-                 message = "Please input a valid confidence level"
-            ),
-            need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
-                 message = "Please input a valid standard error"
-            )
-          )
-          getsampling(selection(),input$theta0,input$n,popsd())
-        }
-        )
+  output$sampledist<-renderPlot({
+    validate(
+      need(
+        expr=selection()!='Binomial',
+        message = "Set parameters and press the Simulate button!"
       )
-    }
-  )
+    )
+    validate(
+      need(
+        expr=cl() > 0 && cl() < 1,
+        message = "Please input a valid confidence level"
+      ),
+      need(
+        expr=norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+        message = "Please input a valid standard error"
+      )
+    )
+    getsampling(selection(),theta0(),n(),popsd())
+  })
   
   output$pfunctionPop<-renderPlot({
+    validate(
+      need(
+        expr=selection()=='Binomial',
+        message = "Set parameters and press the Simulate button!"
+      )
+    )
     validate(
       need(clp() > 0 && clp() < 1,
            message = "Please input a valid confidence level"
@@ -1077,7 +1094,10 @@ server <- function(input, output, session) {
       ggplot()+
       geom_line(
         data=data,
-        mapping = aes(x=theta,y=p_value)
+        mapping = aes(x=theta,y=p_value),
+        color="blue",
+        size=2,
+        alpha=0.5
       )+
       lims(
         x=xlimP,
@@ -1106,6 +1126,10 @@ server <- function(input, output, session) {
         size = 1
       )+
       geom_segment(
+        aes(x = phatp(), y = 0, xend = phatp(), yend = 1, colour = "Observed estimate"),
+        size = 1
+      )+
+      geom_segment(
         aes(x = xlimP[1], y = p_value, xend = theta0p(), yend = p_value, colour = "Null value"),
         size = 1
       )+
@@ -1117,7 +1141,7 @@ server <- function(input, output, session) {
         name = NULL,
         values = c(
           "Confidence interval" = psuPalette[1],
-          "Observed estimate" = boastPalette[3],
+          "Observed estimate" = psuPalette[4],
           "Null value" = "black"
         )
       )+
@@ -1132,105 +1156,98 @@ server <- function(input, output, session) {
     return(gP)
   })
   
-  observeEvent(
-    eventExpr = input$simforp,
-    handlerExpr = {
-      output$sampledistPop<-renderPlot(
-        isolate({
-          validate(
-            need(clp() > 0 && clp() < 1,
-                 message = "Please input a valid confidence level"
-            )
-          )
-          getsampling(selection(),input$theta0ofp,input$nofp)
-        }
-        )
+  output$sampledistPop<-renderPlot({
+    validate(
+      need(
+        expr=selection()=='Binomial',
+        message = "Set parameters and press the Simulate button!"
       )
-    }
+    )
+    validate(
+      need(clp() > 0 && clp() < 1,
+           message = "Please input a valid confidence level"
+      )
+    )
+    getsampling(selection(),theta0p(),np())
+  }
   )
   
   ### table----
-  observeEvent(
-    eventExpr = input$simforp,
+  output$pvaluePop<-renderTable({
+    validate(
+      need(
+        expr=selection()=='Binomial',
+        message = ""
+      )
+    )
+    validate(
+      need(clp() > 0 && clp() < 1,
+           message = ""
+      )
+    )
     
-    handlerExpr = {
-      output$pvaluePop<-renderTable(
-        isolate({
-          validate(
-            need(input$clofp > 0 && input$clofp < 1,
-                 message = "Please input a valid confidence level"
-            )
-          )
-          
-          p_value<-getpvalue(selection())
-          ciP<-binom.exact(
-            x = successp(),
-            n = input$nofp,
-            p = input$theta0ofp,
-            alternative="two.side",
-            tsmethod = "central",
-            conf.level = input$clofp
-          )$conf.int
-          ctable<-matrix(c(phatp(),p_value,ciP[1],ciP[2]),nrow=1)
-          colnames(ctable)<-c("Sample proportion","P-value","Lower bound","Upper bound")
-          ctable
-        }
-        )
-      )
-    }
+    p_value<-getpvalue(selection())
+    ciP<-binom.exact(
+      x = successp(),
+      n = np(),
+      p = theta0p(),
+      alternative="two.side",
+      tsmethod = "central",
+      conf.level = clp()
+    )$conf.int
+    ctable<-matrix(c(phatp(),p_value,ciP[1],ciP[2]),nrow=1)
+    colnames(ctable)<-c("Sample proportion","P-value","Lower bound","Upper bound")
+    ctable
+  }
   )
   
-  observeEvent(
-    eventExpr = input$sim,
-    handlerExpr = {
-      output$pvalue<-renderTable(
-        isolate({
-          validate(
-            need(input$cl > 0 && input$cl < 1,
-                 message = "Please input a valid confidence level"
-            ),
-            need(input$norsd > 0 || selection()=="Uniform"|| selection()=="Poisson",
-                 message = "Please input a valid standard error"
-            ) 
-          )
-          
-          if(selection()=="Poisson"){
-            p_value<-getpvalue(selection())
-            ci<-poisson.exact(
-              x = sum(sampledata()),
-              T = input$n,
-              r = input$theta0,
-              alternative = "two.side",
-              tsmethod = "central",
-              conf.level = input$cl
-            )$conf.int
-            ctable<-matrix(c(meanhat(),p_value,ci[1],ci[2]),nrow=1)
-            colnames(ctable)<-c("Sample mean","P-value","Lower bound","Upper bound")
-            return(ctable)
-          }
-          
-          if(selection()=="Normal" || selection()=="Uniform"){
-            p_value<-getpvalue(selection())
-            getci<-function(alpha){
-              lowerbound<-meanhat()+qnorm(alpha/2)*(popsd()/sqrt(input$n))
-              upperbound<-meanhat()+qnorm(1-alpha/2)*(popsd()/sqrt(input$n))
-              bound<-c(lowerbound,upperbound)
-              return(bound)
-            }
-            alpha<-1-input$cl
-            ctable<-matrix(c(meanhat(),p_value,max(0,getci(alpha)[1]),getci(alpha)[2]),nrow=1)
-            colnames(ctable)<-c("Sample mean","P-value","Lower bound","Upper bound")
-            return(ctable)
-          }
-        }
-        )
-      )
-    }
-  )
-  
-  
-}
+ output$pvalue<-renderTable({
+   validate(
+     need(
+       expr=selection()!='Binomial',
+       message = ""
+     )
+   )
+   validate(
+     need(cl() > 0 && cl() < 1,
+          message = ""
+     ),
+     need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+          message = ""
+     ) 
+   )
+   
+   if(selection()=="Poisson"){
+     p_value<-getpvalue(selection())
+     ci<-poisson.exact(
+       x = sum(sampledata()),
+       T = n(),
+       r = theta0(),
+       alternative = "two.side",
+       tsmethod = "central",
+       conf.level = cl()
+     )$conf.int
+     ctable<-matrix(c(meanhat(),p_value,ci[1],ci[2]),nrow=1)
+     colnames(ctable)<-c("Sample mean","P-value","Lower bound","Upper bound")
+     return(ctable)
+   }
+   
+   if(selection()=="Normal" || selection()=="Uniform"){
+     p_value<-getpvalue(selection())
+     getci<-function(alpha){
+       lowerbound<-meanhat()+qnorm(alpha/2)*(popsd()/sqrt(input$n))
+       upperbound<-meanhat()+qnorm(1-alpha/2)*(popsd()/sqrt(input$n))
+       bound<-c(lowerbound,upperbound)
+       return(bound)
+     }
+     alpha<-1-cl()
+     ctable<-matrix(c(meanhat(),p_value,max(0,getci(alpha)[1]),getci(alpha)[2]),nrow=1)
+     colnames(ctable)<-c("Sample mean","P-value","Lower bound","Upper bound")
+     return(ctable)
+   }
+ })
 
+}
 
 # Boast App Call ----
 boastApp(ui = ui, server = server)
