@@ -146,13 +146,20 @@ ui <- list(
         #### Set up an Explore Page ----
         tabItem(
           tabName = "explore",
-          withMathJax(),
           h2("Explore the p-value funtion"),
-          p("On this page, you can explore p-value functions in different 
-            situations."),
+          p("On this page, you can explore p-value functions in four different 
+            population distributions:"),
+          withMathJax(
+            tags$ul(
+            tags$li("X~Bin (n=1000, p=0.5)"),
+            tags$li("X~Poi (\u03BB=25)"),
+            tags$li("X~Nor (\u03BC=90, \u03C3), you will choose the population standard deviation"),
+            tags$li("X~Uni (a=0, b=120)"),
+            )
+          ),
           p("Select the hypothesis test type, select the population distribution 
-            and then change the inputs. Once you are ready, click simulate. All 
-            p values are the results of the two tailed hypothesis test."),
+            and then change the inputs. Once you are ready, click simulate. 
+            All p values are the results of the two tailed hypothesis test."),
           fluidPage(
             tabsetPanel(
               id = "whichtype",
@@ -228,7 +235,7 @@ ui <- list(
                   plotOutput("pfunctionPop"),
                   br(),
                   checkboxInput("resultsPop",
-                                "Show test results", FALSE),
+                                "Results table", FALSE),
                   conditionalPanel(
                     condition = "input.resultsPop==1",
                     tableOutput("pvaluePop")
@@ -306,7 +313,7 @@ ui <- list(
                   plotOutput("pfunctionMean"),
                   br(),
                   checkboxInput("resultsMean",
-                                "Show test results", FALSE),
+                                "Results table", FALSE),
                   conditionalPanel(
                     condition = "input.resultsMean==1",
                     tableOutput("pvalue")
@@ -1129,9 +1136,11 @@ server <- function(input, output, session) {
       conf.level = clp()
     )$conf.int
     ctable<-matrix(c(phatp(),p_value,ciP[1],ciP[2]),nrow=1)
-    colnames(ctable)<-c("Sample proportion","P-value","Lower bound","Upper bound")
+    c2<-paste("Confidence interval"," lower bound",sep = "<br>")
+    c3<-paste("Confidence interval"," upper bound",sep = "<br>")
+    colnames(ctable)<-c("Sample proportion","P-value",c2,c3)
     ctable
-  }
+  },bordered = TRUE,sanitize.text.function=identity
   )
   
  output$pvalue<-renderTable({
@@ -1158,7 +1167,9 @@ server <- function(input, output, session) {
        conf.level = cl()
      )$conf.int
      ctable<-matrix(c(meanhat(),p_value,ci[1],ci[2]),nrow=1)
-     colnames(ctable)<-c("Sample mean","P-value","Lower bound","Upper bound")
+     c2<-paste("Confidence interval"," lower bound",sep = "<br>")
+     c3<-paste("Confidence interval"," upper bound",sep = "<br>")
+     colnames(ctable)<-c("Sample mean","P-value",c2,c3)
      return(ctable)
    }
    
@@ -1172,10 +1183,12 @@ server <- function(input, output, session) {
      }
      alpha<-1-cl()
      ctable<-matrix(c(meanhat(),p_value,max(0,getci(alpha)[1]),getci(alpha)[2]),nrow=1)
-     colnames(ctable)<-c("Sample mean","P-value","Lower bound","Upper bound")
+     c2<-paste("Confidence interval"," lower bound",sep = "<br>")
+     c3<-paste("Confidence interval"," upper bound",sep = "<br>")
+     colnames(ctable)<-c("Sample mean","P-value",c2,c3)
      return(ctable)
    }
- })
+ },bordered = TRUE,sanitize.text.function=identity)
 
 }
 
