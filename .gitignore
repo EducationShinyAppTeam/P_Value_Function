@@ -38,3 +38,4 @@ rsconnect/
 
 # System Files
 .DS_Store
+samplingfunctions.R

@@ -28,7 +28,7 @@ ui <- list(
       tags$li(
         class = "dropdown",
         tags$a(href = 'https://shinyapps.science.psu.edu/',
-               icon("home")
+               icon("house")
         )
       )
     ),
@@ -37,7 +37,7 @@ ui <- list(
       width = 250,
       sidebarMenu(
         id = "pages",
-        menuItem("Overview", tabName = "overview", icon = icon("tachometer-alt")),
+        menuItem("Overview", tabName = "overview", icon = icon("gauge-high")),
         menuItem("Prerequisites", tabName = "prerequisites", icon = icon("book")),
         menuItem("Explore", tabName = "explore", icon = icon("wpexplorer")),
         menuItem("References", tabName = "references", icon = icon("leanpub"))
@@ -785,10 +785,11 @@ server <- function(input, output, session) {
           size=2,
           alpha=0.5
         )+
-        lims(
-          x=xlim,
-          y=c(0,1)
+        scale_x_continuous(
+          limits = xlim,
+          expand = expansion(mult =0, add = 0)
         )+
+        scale_y_continuous(expand = expansion(mult = .05))+
         labs(
           title = "P-value Function",
           x = "Null hypothesis mean", 
@@ -796,15 +797,7 @@ server <- function(input, output, session) {
           alt = "A plot of a set of p values versus different means "
         )+
         geom_segment(
-          aes(x = ci[1], y = alpha, xend = ci[2], yend = alpha, colour = "Confidence interval"),
-          size = 1
-        )+
-        geom_segment(
-          aes(x = ci[2], y = 0, xend = ci[2], yend = alpha, colour = "Confidence interval"),
-          size = 1
-        )+
-        geom_segment(
-          aes(x = ci[1], y = 0, xend = ci[1], yend = alpha, colour = "Confidence interval"),
+          aes(x = ci[1], y = 0, xend = ci[2], yend = 0, colour = "Confidence interval"),
           size = 1
         )+
         geom_segment(
@@ -909,10 +902,11 @@ server <- function(input, output, session) {
           size=2,
           alpha=0.5
         )+
-        lims(
-          x=xlim,
-          y=c(0,1)
+        scale_x_continuous(
+          limits = xlim,
+          expand = expansion(mult =0, add = 0)
         )+
+        scale_y_continuous(expand = expansion(mult = .05))+
         labs(
           title = "P-value Function",
           x = "Null hypothesis mean", 
@@ -920,15 +914,7 @@ server <- function(input, output, session) {
           alt = "A plot of a set of p values versus different means "
         )+
         geom_segment(
-          aes(x = ci[1], y = alpha, xend = ci[2], yend = alpha, colour = "Confidence interval"),
-          size = 1
-        )+
-        geom_segment(
-          aes(x = ci[2], y = 0, xend = ci[2], yend = alpha, colour = "Confidence interval"),
-          size = 1
-        )+
-        geom_segment(
-          aes(x = ci[1], y = 0, xend = ci[1], yend = alpha, colour = "Confidence interval"),
+          aes(x = ci[1], y = 0, xend = ci[2], yend = 0, colour = "Confidence interval"),
           size = 1
         )+
         geom_segment(
@@ -985,6 +971,12 @@ server <- function(input, output, session) {
   })
   
   output$pfunctionPop<-renderPlot({
+    validate(
+      need(
+        expr=input$simforp,
+        message = "Set parameters and press the Simulate button!"
+      )
+    )
     validate(
       need(
         expr=selection()=='Binomial',
@@ -1049,10 +1041,11 @@ server <- function(input, output, session) {
         size=2,
         alpha=0.5
       )+
-      lims(
-        x=xlimP,
-        y=c(0,1)
+      scale_x_continuous(
+        limits = xlimP,
+        expand = expansion(mult =0, add = 0)
       )+
+      scale_y_continuous(expand = expansion(mult = .05))+
       labs(
         title = "P-value Function",
         x = "Null hypothesis proportion", 
@@ -1060,15 +1053,7 @@ server <- function(input, output, session) {
         alt = "A plot of a set of p values versus different proportions "
       )+
       geom_segment(
-        aes(x = ciP[1], y = alphaP, xend = ciP[2], yend = alphaP, colour = "Confidence interval"),
-        size = 1
-      )+
-      geom_segment(
-        aes(x = ciP[2], y = 0, xend = ciP[2], yend = alphaP, colour = "Confidence interval"),
-        size = 1
-      )+
-      geom_segment(
-        aes(x = ciP[1], y = 0, xend = ciP[1], yend = alphaP, colour = "Confidence interval"),
+        aes(x = ciP[1], y = 0, xend = ciP[2], yend = 0, colour = "Confidence interval"),
         size = 1
       )+
       geom_segment(
@@ -1107,6 +1092,12 @@ server <- function(input, output, session) {
   })
   
   output$sampledistPop<-renderPlot({
+    validate(
+      need(
+        expr=input$simforp,
+        message = "Set parameters and press the Simulate button!"
+      )
+    )
     validate(
       need(
         expr=selection()=='Binomial',
