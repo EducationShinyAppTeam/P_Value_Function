@@ -782,7 +782,7 @@ server <- function(input, output, session) {
           data=data,
           mapping = aes(x=theta,y=p_value),
           color="blue",
-          size=2,
+          size=1,
           alpha=0.5
         )+
         scale_x_continuous(
@@ -799,6 +799,15 @@ server <- function(input, output, session) {
         geom_segment(
           aes(x = ci[1], y = 0, xend = ci[2], yend = 0, colour = "Confidence interval"),
           size = 1
+        )+
+        geom_point(
+          mapping=aes(x=c(ci[1],ci[2]),y=c(0,0)),
+          alpha=0
+        )+
+        geom_errorbarh(
+          aes(xmin=ci[1],xmax=ci[2],y=0,colour = "Confidence interval"),
+          height=0.05*1,
+          size=1
         )+
         geom_segment(
           aes(x = xlim[1], y = 1, xend = meanhat(), yend = 1, colour = "Observed estimate"),
@@ -899,7 +908,7 @@ server <- function(input, output, session) {
           data=data,
           mapping = aes(x=theta,y=p_value),
           color="blue",
-          size=2,
+          size=1,
           alpha=0.5
         )+
         scale_x_continuous(
@@ -916,6 +925,15 @@ server <- function(input, output, session) {
         geom_segment(
           aes(x = ci[1], y = 0, xend = ci[2], yend = 0, colour = "Confidence interval"),
           size = 1
+        )+
+        geom_point(
+          mapping=aes(x=c(ci[1],ci[2]),y=c(0,0)),
+          alpha=0
+        )+
+        geom_errorbarh(
+          aes(xmin=ci[1],xmax=ci[2],y=0,colour = "Confidence interval"),
+          height=0.05*1,
+          size=1
         )+
         geom_segment(
           aes(x = xlim[1], y = 1, xend = meanhat(), yend = 1, colour = "Observed estimate"),
@@ -1038,7 +1056,7 @@ server <- function(input, output, session) {
         data=data,
         mapping = aes(x=theta,y=p_value),
         color="blue",
-        size=2,
+        size=1,
         alpha=0.5
       )+
       scale_x_continuous(
@@ -1055,6 +1073,15 @@ server <- function(input, output, session) {
       geom_segment(
         aes(x = ciP[1], y = 0, xend = ciP[2], yend = 0, colour = "Confidence interval"),
         size = 1
+      )+
+      geom_point(
+        mapping=aes(x=c(ciP[1],ciP[2]),y=c(0,0)),
+        alpha=0
+      )+
+      geom_errorbarh(
+        aes(xmin=ciP[1],xmax=ciP[2],y=0,colour = "Confidence interval"),
+        height=0.05*1,
+        size=1
       )+
       geom_segment(
         aes(x = xlimP[1], y = 1, xend = phatp(), yend = 1, colour = "Observed estimate"),
