@@ -186,7 +186,7 @@ ui <- list(
                     sliderInput(
                       inputId = "clofp",
                       label = HTML(paste("1 - ","&alpha;")),
-                      min = 0.8,
+                      min = 0.6,
                       max = 0.99,
                       step = 0.01,
                       value = 0.95
@@ -268,7 +268,7 @@ ui <- list(
                     sliderInput(
                       inputId = "cl",
                       label = HTML(paste("1 - ","&alpha;")),
-                      min = 0.8,
+                      min = 0.6,
                       max = 0.99,
                       step = 0.01,
                       value = 0.95
