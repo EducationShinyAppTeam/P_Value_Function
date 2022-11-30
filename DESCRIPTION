@@ -1,6 +1,6 @@
 Title: P-Value Function and Hypothesis Testing
 ShortName: P-Value Function
-Date: 2021-06-05
+Date: 2021-11-30
 Lifecycle: experimental
 Authors@R: c(
     person(given = "Jing", family = "Fu", email = "jvf5652@psu.edu", role = c("aut")),
