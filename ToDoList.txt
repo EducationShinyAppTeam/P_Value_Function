@@ -1,0 +1,6 @@
+# Things Needed for This Version
+1.Review and Deploy
+
+
+# Ideas for Future Development
+Repeat with Bayesian Inference App, so consider adding more unique functions 
