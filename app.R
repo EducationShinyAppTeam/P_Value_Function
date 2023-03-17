@@ -8,8 +8,8 @@ library(exactci)
 library(ggplot2)
 library(dplyr)
 
-# Load additional funCtions
-source("samplingfunction.R")
+# Load additional functions ----
+source("samplingFunctions.R")
 
 # Define UI for App ----
 ui <- list(
@@ -54,10 +54,12 @@ ui <- list(
         tabItem(
           tabName = "overview",
           withMathJax(),
-          h1("P-Value Function and Hypothesis Testing"), # full name.
+          h1("P-Value Function and Hypothesis Testing"),
           p("This app can generate the p-value function, which displays 
-            confidence limits and p-values of any confidence level of the parameter. 
-            And the user can use this app to do hypothesis testing for one sample."),
+            confidence limits and p-values of any confidence level of the
+            parameter. The user can use this app to do hypothesis testing for
+            one sample."
+          ),
           h2("Instructions"),
           tags$ol(
             tags$li("Click the Go button to enter the Explore page."),
@@ -80,7 +82,6 @@ ui <- list(
               style = "default"
             )
           ),
-          ##### Create two lines of space
           br(),
           br(),
           h2("Acknowledgements"),
@@ -94,7 +95,7 @@ ui <- list(
             citeApp(),
             br(),
             br(),
-            div(class = "updated", "Last Update: 11/30/2022 by JF.")
+            div(class = "updated", "Last Update: 03/17/2023 by NJH.")
           )
         ),
         #### Set up the Prerequisites Page ----
@@ -137,79 +138,86 @@ ui <- list(
             collapsible = TRUE,
             collapsed = TRUE,
             width = '100%',
-            "The confidence level, k%, represents the long-run proportion of correspondingly 
-            confidence interval that end up containing the true value of the parameter. 
-            If we were to repeat the entire experiment, then k% of the time we will 
-            make an interval that contains the true value of the population parameter."
+            "The confidence level, k%, represents the long-run proportion of
+            corresponding confidence intervals that contain the true value of the
+            parameter. If we were to repeat the entire experiment, then k% of the
+            time we will make an interval that contains the true value of the
+            population parameter."
           )
         ),
         #### Set up an Explore Page ----
         tabItem(
           tabName = "explore",
+          withMathJax(),
           h2("Explore the p-value funtion"),
           p("On this page, you can explore p-value functions in four different 
             population distributions:"),
-          withMathJax(
-            tags$ul(
-            tags$li("X~Bin (n=1000, p=0.5)"),
-            tags$li("X~Poi (\u03BB=25)"),
-            tags$li("X~Nor (\u03BC=90, \u03C3), you will choose the population 
-                    standard deviation"),
-            tags$li("X~Uni (a=0, b=120)"),
+          tags$ul(
+            tags$li(
+              "Single Proportion",
+              tags$ul(
+                tags$li("\\(X\\sim Bin\\left(n=1000, p=0.5\\right)\\)")
+              )
+            ),
+            tags$li(
+              "Single Mean",
+              tags$ul(
+                tags$li("\\(X\\sim Poi\\left(\\lambda=25\\right)\\)"),
+                tags$li("\\(X\\sim N\\left(\\mu=90, \\sigma\\right)\\), you will
+                        be able to control the population standard deviation, 
+                        \\(\\sigma\\)"),
+                tags$li("\\(X\\sim Uni\\left(a=0, b=120\\right)\\)")
+              )
             )
           ),
-          p("Select the hypothesis test type, select the population distribution 
+          p("Select the hypothesis test type, select the population distribution, 
             and then change the inputs. Once you are ready, click simulate. 
-            All p values are the results of the two tailed hypothesis test."),
-          fluidPage(
-            tabsetPanel(
-              id = "whichtype",
-              type = "tabs",
-              ##### Testing for single proportion ----
-              tabPanel(
-                title = "Single proportion",
-                value = "pro",
+            All p-values are the results of the two tailed hypothesis test."
+          ),
+          tabsetPanel(
+            id = "whichType",
+            type = "tabs",
+            ##### Testing for single proportion ----
+            tabPanel(
+              title = "Single Proportion",
+              value = "pro",
+              br(),
+              fluidRow(
+                ###### Input controls ----
                 column(
                   width = 4,
                   offset = 0,
                   wellPanel(
-                    #### input part----
-                    #population dis
-                    tags$strong("Population distribution"),
+                    # population dis
                     radioButtons(
                       inputId = "binomial", 
-                      label = NULL, 
+                      label = "Population distribution", 
                       choices = c("Binomial"),
                       selected = "Binomial", 
                       width = '100%'
-                      ),
+                    ),
                     #confidence level
-                    tags$strong("Confidence level"),
                     sliderInput(
                       inputId = "clofp",
-                      label = HTML(paste("1 - ","&alpha;")),
+                      label = "Confidence level, \\(1-\\alpha\\)",
                       min = 0.6,
                       max = 0.99,
                       step = 0.01,
                       value = 0.95
                     ),
-                    br(),
                     #sample size
-                    tags$strong("Sample size"),
                     sliderInput(
                       inputId = "nofp",
-                      label = "n",
+                      label = "Sample size, n",
                       min = 2,
                       max = 90,
                       step = 1,
                       value = 50
                     ),
-                    br(),
                     #null hypothesis
-                    tags$strong("Null hypothesis"),
                     sliderInput(
                       inputId = "theta0ofp",
-                      label= div(HTML(paste0("H",tags$sub("0"),": p"))),
+                      label = "Null hypothesis, \\(H_0\\)",
                       min = 0,
                       max = 1,
                       step = 0.01,
@@ -226,10 +234,11 @@ ui <- list(
                       )
                     ),
                     br(),
+                    # Information about the sampled population?
                     uiOutput("sampledataPop")
                   )
                 ),
-                #### output prat----
+                ###### Output Section----
                 column(
                   width = 8,
                   offset = 0,
@@ -239,7 +248,7 @@ ui <- list(
                     inputId = "resultsPop",
                     label = "Results table",
                     value = FALSE
-                    ),
+                  ),
                   conditionalPanel(
                     condition = "input.resultsPop==1",
                     tableOutput("pvaluePop")
@@ -247,54 +256,67 @@ ui <- list(
                   br(),
                   plotOutput("sampledistPop")
                 )
-              ),
-              ##### Testing for single mean ----
-              tabPanel(
-                title = "Single mean",
-                value = "mean",
+              )
+            ),
+            ##### Testing for single mean ----
+            tabPanel(
+              title = "Single Mean",
+              value = "mean",
+              br(),
+              fluidRow(
                 column(
                   width = 4,
                   offset = 0,
                   wellPanel(
-                    #### input part----
+                    ###### Input controls ----
                     #population dis
-                    tags$strong("Population distribution"),
                     radioButtons(
                       inputId = "types", 
-                      label = NULL, 
+                      label = "Population distribution", 
                       choices = c("Poisson","Normal","Uniform"),
                       selected = "Normal", 
                       width = '100%'
                     ),
-                    br(),
                     #confidence level
-                    tags$strong("Confidence level"),
                     sliderInput(
                       inputId = "cl",
-                      label = HTML(paste("1 - ","&alpha;")),
+                      label = "Confidence level, \\(1-\\alpha\\)",
                       min = 0.6,
                       max = 0.99,
                       step = 0.01,
                       value = 0.95
                     ),
-                    br(),
                     #sample size
                     tags$strong("Sample size"),
                     sliderInput(
                       inputId = "n",
-                      label = "n ",
+                      label = "Sample size, n",
                       min = 2,
                       max = 90,
                       step = 1,
                       value = 50
                     ),
-                    br(),
                     #null hypothesis
-                    tags$strong("Null hypothesis"),
-                    uiOutput("choosetheta0"),
-                    br(),
-                    #popsd for normal
-                    uiOutput("choosepopsd"),
+                    sliderInput(
+                      inputId = "theta0",
+                      label = "Null hypothesis, \\(H_0\\)",
+                      min = 0,
+                      max = 120,
+                      value = 90,
+                      step = 1
+                    ),
+                    # Std. Deviation for Normal
+                    conditionalPanel(
+                      condition = "input.types == 'Normal'",
+                      numericInput(
+                        inputId = "norsd",
+                        label = "Standard deviation, \\(\\sigma\\)",
+                        min = 1,
+                        max = 50, 
+                        value = 10,
+                        step = 1
+                      )
+                    ),
                     # simulate button
                     div(
                       style = "text-align: center;",
@@ -309,7 +331,7 @@ ui <- list(
                     uiOutput("sampledataMean")
                   )
                 ),
-                #### output part----
+                ###### Output section ----
                 column(
                   width = 8,
                   offset = 0,
@@ -319,7 +341,7 @@ ui <- list(
                     inputId = "resultsMean",
                     label = "Results table", 
                     value = FALSE
-                    ),
+                  ),
                   conditionalPanel(
                     condition = "input.resultsMean==1",
                     tableOutput("pvalue")
@@ -424,8 +446,8 @@ server <- function(input, output, session) {
       )
     }
   )
-  ## set buttons----
-  ### explore button
+  
+  ## Go button ----
   observeEvent(
     eventExpr = input$go,
     handlerExpr = {
@@ -436,7 +458,36 @@ server <- function(input, output, session) {
       )
     }
   )
-  ### simulate button proportion
+  
+  ## Update mean null hypothesis slider ----
+  observeEvent(
+    eventExpr = input$types,
+    handlerExpr = {
+      defaultValue <- switch(
+        EXPR = input$types,
+        Poisson = 25,
+        Normal = 90,
+        Uniform = 60
+      )
+      maxValue <- ifelse(
+        test = input$types == "Poisson",
+        yes = 50,
+        no = 120
+      )
+      
+      updateSliderInput(
+        session = session,
+        inputId = "theta0",
+        value = defaultValue,
+        max = maxValue
+      )
+      
+    }
+  )
+  
+  ## Update simulate buttons ----
+  
+  ### Proportion ----
   observeEvent(
     eventExpr = input$simforp,
     handlerExpr = {
@@ -449,7 +500,7 @@ server <- function(input, output, session) {
       )
     }
   )
-  ### simulation button mean
+  ### Mean ----
   observeEvent(
     eventExpr = input$sim,
     handlerExpr = {
@@ -463,71 +514,19 @@ server <- function(input, output, session) {
     }
   )
   
-  ## update inputs values----
+  ## update inputs values ----
   ## population selection
   selection <- eventReactive(
-    eventExpr = c(input$sim,input$simforp),
+    eventExpr = c(input$sim, input$simforp),
     valueExpr = {
-      if(input$whichtype=='mean'){
+      if(input$whichType=='mean'){
         value <- input$types}
-      if(input$whichtype=='pro'){
+      if(input$whichType=='pro'){
         value <- input$binomial}
       return(value)
     }
   )
-
-  ### update theta0 of Mean
-  output$choosetheta0 <- renderUI({
-    if(input$types=='Poisson'){
-      theta0 <- sliderInput(
-        inputId = "theta0",
-        label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
-        min = 0,
-        max = 50,
-        value = 25,
-        step = 1
-        )
-    }
-    if(input$types=='Normal'){
-      theta0 <- sliderInput(
-        inputId = "theta0",
-        label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
-        min = 0,
-        max = 120,
-        value = 90,
-        step = 1
-        )
-    }
-    if(input$types=='Uniform'){
-      theta0 <- sliderInput(
-        inputId = "theta0",
-        label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
-        min = 0,
-        max = 120,
-        value = 60,
-        step = 1
-        )
-    }
-    return(theta0)
-    }
-    )
   
-  ### update sd of normal
-  output$choosepopsd <- renderUI({
-    if(input$types=='Normal'){
-      numericInput(
-        inputId = "norsd",
-        label = tags$div(
-          tags$strong("Standard deviation"),
-          HTML("&sigma;")),
-        min = 1,
-        max = 50, 
-        value = 10,
-        step = 1
-        )
-      }
-    }
-    )
   
   ### update popsd of Mean
   getpopsd <- function(selection){
@@ -571,7 +570,7 @@ server <- function(input, output, session) {
       }
     )
   
-  sampledatap <- reactive(getsample(selection(),np()))
+  sampledatap <- reactive(getSample(selection(),np()))
   successp <- reactive(sum(sampledatap()))
   phatp <- reactive(round(mean(sampledatap()),3))
   
@@ -604,7 +603,7 @@ server <- function(input, output, session) {
       input$cl
       }
     )
-  sampledata <-reactive(getsample(selection(),n(),popsd()))
+  sampledata <-reactive(getSample(selection(),n(),popsd()))
   meanhat <- reactive(round(mean(sampledata()),3))
   
   ### error message
@@ -1001,17 +1000,17 @@ server <- function(input, output, session) {
   output$sampledist <- renderPlot({
     validate(
       need(
-        expr = selection()!='Binomial',
+        expr = selection() != 'Binomial',
         message = "Set parameters and press the Simulate button!"
       )
     )
     validate(
       need(
-        expr = norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+        expr = norsd() > 0 || selection() == "Uniform" || selection() == "Poisson",
         message = "Please input a valid standard error"
       )
     )
-    getsampling(selection(),theta0(),n(),popsd())
+    getSamplingDist(selection(), theta0(), n(), popsd())
   })
   
   output$pfunctionPop <- renderPlot({
@@ -1023,7 +1022,7 @@ server <- function(input, output, session) {
     )
     validate(
       need(
-        expr = selection()=='Binomial',
+        expr = selection() == 'Binomial',
         message = "Set parameters and press the Simulate button!"
       )
     )
@@ -1183,7 +1182,7 @@ server <- function(input, output, session) {
         message = "Set parameters and press the Simulate button!"
       )
     )
-    getsampling(selection(),theta0p(),np())
+    getSamplingDist(selection(),theta0p(),np())
   }
   )
   
