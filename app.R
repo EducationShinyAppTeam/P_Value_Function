@@ -8,15 +8,14 @@ library(exactci)
 library(ggplot2)
 library(dplyr)
 
-# Load additional funCtions
-source("samplingfunction.R")
+# Load additional functions ----
+source("samplingFunctions.R")
 
 # Define UI for App ----
 ui <- list(
-  ## Create the app page ----
   dashboardPage(
     skin = "purple",
-    ### Create the app header ----
+    ## Header ----
     dashboardHeader(
       title = "P-Value Function", 
       titleWidth = 250,
@@ -32,7 +31,7 @@ ui <- list(
         )
       )
     ),
-    ### Create the sidebar/left navigation menu ----
+    ## Sidebar ----
     dashboardSidebar(
       width = 250,
       sidebarMenu(
@@ -47,17 +46,19 @@ ui <- list(
         boastUtils::sidebarFooter()
       )
     ),
-    ### Create the content ----
+    ## Body ----
     dashboardBody(
       tabItems(
-        #### Set up the Overview Page ----
+        ### Overview Page ----
         tabItem(
           tabName = "overview",
           withMathJax(),
-          h1("P-Value Function and Hypothesis Testing"), # full name.
+          h1("P-Value Function and Hypothesis Testing"),
           p("This app can generate the p-value function, which displays 
-            confidence limits and p-values of any confidence level of the parameter. 
-            And the user can use this app to do hypothesis testing for one sample."),
+            confidence limits and p-values of any confidence level of the
+            parameter. The user can use this app to do hypothesis testing for
+            one sample."
+          ),
           h2("Instructions"),
           tags$ol(
             tags$li("Click the Go button to enter the Explore page."),
@@ -69,7 +70,6 @@ ui <- list(
             tags$li("Adjust your inputs and click the re-simulate button again to 
                     start a new test.")
           ),
-          ##### Go Button
           div(
             style = "text-align: center;",
             bsButton(
@@ -80,7 +80,6 @@ ui <- list(
               style = "default"
             )
           ),
-          ##### Create two lines of space
           br(),
           br(),
           h2("Acknowledgements"),
@@ -94,10 +93,10 @@ ui <- list(
             citeApp(),
             br(),
             br(),
-            div(class = "updated", "Last Update: 11/30/2022 by JF.")
+            div(class = "updated", "Last Update: 07/27/2023 by NJH.")
           )
         ),
-        #### Set up the Prerequisites Page ----
+        ### Prerequisites Page ----
         tabItem(
           tabName = "prerequisites",
           withMathJax(),
@@ -120,7 +119,7 @@ ui <- list(
             as we see; The smaller, the less often."
           ),
           box(
-            title = strong("p-value functions"),
+            title = strong("p-value function"),
             status = "primary",
             collapsible = TRUE,
             collapsed = TRUE,
@@ -137,79 +136,86 @@ ui <- list(
             collapsible = TRUE,
             collapsed = TRUE,
             width = '100%',
-            "The confidence level, k%, represents the long-run proportion of correspondingly 
-            confidence interval that end up containing the true value of the parameter. 
-            If we were to repeat the entire experiment, then k% of the time we will 
-            make an interval that contains the true value of the population parameter."
+            "The confidence level, k%, represents the long-run proportion of
+            corresponding confidence intervals that contain the true value of the
+            parameter. If we were to repeat the entire experiment, then k% of the
+            time we will make an interval that contains the true value of the
+            population parameter."
           )
         ),
-        #### Set up an Explore Page ----
+        ### Explore Page ----
         tabItem(
           tabName = "explore",
+          withMathJax(),
           h2("Explore the p-value funtion"),
           p("On this page, you can explore p-value functions in four different 
             population distributions:"),
-          withMathJax(
-            tags$ul(
-            tags$li("X~Bin (n=1000, p=0.5)"),
-            tags$li("X~Poi (\u03BB=25)"),
-            tags$li("X~Nor (\u03BC=90, \u03C3), you will choose the population 
-                    standard deviation"),
-            tags$li("X~Uni (a=0, b=120)"),
+          tags$ul(
+            tags$li(
+              "Single Proportion",
+              tags$ul(
+                tags$li("\\(X\\sim Bin\\left(n=1000,\\; p=0.5\\right)\\)")
+              )
+            ),
+            tags$li(
+              "Single Mean",
+              tags$ul(
+                tags$li("\\(X\\sim Poi\\left(\\lambda=25\\right)\\)"),
+                tags$li("\\(X\\sim N\\left(\\mu=90,\\; \\sigma\\right)\\), you will
+                        be able to control the population standard deviation, 
+                        \\(\\sigma\\)"),
+                tags$li("\\(X\\sim Uni\\left(a=0,\\; b=120\\right)\\)")
+              )
             )
           ),
-          p("Select the hypothesis test type, select the population distribution 
+          p("Select the hypothesis test type, select the population distribution, 
             and then change the inputs. Once you are ready, click simulate. 
-            All p values are the results of the two tailed hypothesis test."),
-          fluidPage(
-            tabsetPanel(
-              id = "whichtype",
-              type = "tabs",
-              ##### Testing for single proportion ----
-              tabPanel(
-                title = "Single proportion",
-                value = "pro",
+            All p-values are the results of the two tailed hypothesis test."
+          ),
+          tabsetPanel(
+            id = "whichType",
+            type = "tabs",
+            #### Single Proportion ----
+            tabPanel(
+              title = "Single Proportion",
+              value = "pro",
+              br(),
+              fluidRow(
+                ##### Input controls ----
                 column(
                   width = 4,
                   offset = 0,
                   wellPanel(
-                    #### input part----
-                    #population dis
-                    tags$strong("Population distribution"),
+                    # population dis
                     radioButtons(
                       inputId = "binomial", 
-                      label = NULL, 
+                      label = "Population distribution", 
                       choices = c("Binomial"),
                       selected = "Binomial", 
                       width = '100%'
-                      ),
-                    #confidence level
-                    tags$strong("Confidence level"),
+                    ),
+                    # confidence level
                     sliderInput(
                       inputId = "clofp",
-                      label = HTML(paste("1 - ","&alpha;")),
+                      label = "Confidence level, \\(1-\\alpha\\)",
                       min = 0.6,
                       max = 0.99,
                       step = 0.01,
                       value = 0.95
                     ),
-                    br(),
-                    #sample size
-                    tags$strong("Sample size"),
+                    # sample size
                     sliderInput(
                       inputId = "nofp",
-                      label = "n",
+                      label = "Sample size, n",
                       min = 2,
                       max = 90,
                       step = 1,
                       value = 50
                     ),
-                    br(),
-                    #null hypothesis
-                    tags$strong("Null hypothesis"),
+                    # null hypothesis
                     sliderInput(
                       inputId = "theta0ofp",
-                      label= div(HTML(paste0("H",tags$sub("0"),": p"))),
+                      label = "Null hypothesis, \\(H_0\\)",
                       min = 0,
                       max = 1,
                       step = 0.01,
@@ -229,7 +235,7 @@ ui <- list(
                     uiOutput("sampledataPop")
                   )
                 ),
-                #### output prat----
+                ##### Output Section----
                 column(
                   width = 8,
                   offset = 0,
@@ -239,7 +245,7 @@ ui <- list(
                     inputId = "resultsPop",
                     label = "Results table",
                     value = FALSE
-                    ),
+                  ),
                   conditionalPanel(
                     condition = "input.resultsPop==1",
                     tableOutput("pvaluePop")
@@ -247,54 +253,66 @@ ui <- list(
                   br(),
                   plotOutput("sampledistPop")
                 )
-              ),
-              ##### Testing for single mean ----
-              tabPanel(
-                title = "Single mean",
-                value = "mean",
+              )
+            ),
+            #### Single Mean ----
+            tabPanel(
+              title = "Single Mean",
+              value = "mean",
+              br(),
+              fluidRow(
                 column(
                   width = 4,
                   offset = 0,
                   wellPanel(
-                    #### input part----
-                    #population dis
-                    tags$strong("Population distribution"),
+                    ##### Input controls ----
+                    # population dis
                     radioButtons(
                       inputId = "types", 
-                      label = NULL, 
+                      label = "Population distribution", 
                       choices = c("Poisson","Normal","Uniform"),
                       selected = "Normal", 
                       width = '100%'
                     ),
-                    br(),
-                    #confidence level
-                    tags$strong("Confidence level"),
+                    # confidence level
                     sliderInput(
                       inputId = "cl",
-                      label = HTML(paste("1 - ","&alpha;")),
+                      label = "Confidence level, \\(1-\\alpha\\)",
                       min = 0.6,
                       max = 0.99,
                       step = 0.01,
                       value = 0.95
                     ),
-                    br(),
-                    #sample size
-                    tags$strong("Sample size"),
+                    # sample size
                     sliderInput(
                       inputId = "n",
-                      label = "n ",
+                      label = "Sample size, n",
                       min = 2,
                       max = 90,
                       step = 1,
                       value = 50
                     ),
-                    br(),
-                    #null hypothesis
-                    tags$strong("Null hypothesis"),
-                    uiOutput("choosetheta0"),
-                    br(),
-                    #popsd for normal
-                    uiOutput("choosepopsd"),
+                    # null hypothesis
+                    sliderInput(
+                      inputId = "theta0",
+                      label = "Null hypothesis, \\(H_0\\)",
+                      min = 0,
+                      max = 120,
+                      value = 90,
+                      step = 1
+                    ),
+                    # Std. Deviation for Normal
+                    conditionalPanel(
+                      condition = "input.types == 'Normal'",
+                      numericInput(
+                        inputId = "norsd",
+                        label = "Standard deviation, \\(\\sigma\\)",
+                        min = 1,
+                        max = 50, 
+                        value = 10,
+                        step = 1
+                      )
+                    ),
                     # simulate button
                     div(
                       style = "text-align: center;",
@@ -309,7 +327,7 @@ ui <- list(
                     uiOutput("sampledataMean")
                   )
                 ),
-                #### output part----
+                ##### Output section ----
                 column(
                   width = 8,
                   offset = 0,
@@ -319,7 +337,7 @@ ui <- list(
                     inputId = "resultsMean",
                     label = "Results table", 
                     value = FALSE
-                    ),
+                  ),
                   conditionalPanel(
                     condition = "input.resultsMean==1",
                     tableOutput("pvalue")
@@ -331,7 +349,7 @@ ui <- list(
             )
           )
         ),
-        #### Set up the References Page ----
+        ### References Page ----
         tabItem(
           tabName = "references",
           withMathJax(),
@@ -344,7 +362,7 @@ ui <- list(
           ),
           p(
             class = "hangingindent",
-            "Carey, R. and Hatfield, N. J. (2022). boastUtils: BOAST utlities.
+            "Carey, R. and Hatfield, N. J. (2023). boastUtils: BOAST utlities.
             (v 0.1.12.3). [R package]. Available from
             https://github.com/EducationShinyAppTeam/boastUtils"
           ),
@@ -356,44 +374,40 @@ ui <- list(
           ),
           p(
             class = "hangingindent",
-            "Chang, W., Cheng J., Allaire, J., Sievert, C., Schloerke, B., Xie, Y.,
-            Allen, J., McPherson, J., Dipert, A., and Borges, B. (2021). shiny:
-            Web application framework for R. (v 1.7.1). [R package]. Available
-            from https://CRAN.R-project.org/package=shiny"
+            "Chang, W., Cheng, J., Allaire, J.J., Sievert, C., Schloerke, B.,
+            Xie, Y., Allen, J., McPherson, J., Dipert, A., and Borges, B. (2022).
+            shiny: Web application framework for R. (v1.7.4). [R Package].
+            Available from https://CRAN.R-project.org/package=shiny"
           ),
           p(
             class = "hangingindent",
-            "Fay, M. (2010). exactci: Exact P-values and Matching Confidence 
-            Intervals for simple Discrete Parametric Cases. (v 1.4-2).[R package].
-            Available from 
-            https://CRAN.R-project.org/package=exactci
-            "
+            "Fay, M. P. (2010). Two-sided exact tests and matching confidence 
+            intervals for discrete data. R Journal 2(1), 53-58. (v 1.4-2).
+            [R package]. Available from https://CRAN.R-project.org/package=exactci"
           ),
           p(
             class = "hangingindent",
-            "Infanger, D, Schmidt-Trucksäss, A. (2019). P value functions: An underused 
-            method to present research results and to promote quantitative reasoning. 
-            Statistics in Medicine.
-            Available from 
-            https://doi.org/10.1002/sim.8293
-            "
+            "Infanger, D. and Schmidt-Trucksäss, A. (2019). P value functions: An
+            underused method to present research results and to promote 
+            quantitative reasoning. Statistics in Medicine. 38(21). 4189-4197.
+            Available from https://doi.org/10.1002/sim.8293"
           ),
           p(
             class = "hangingindent",
-            "Perrier, V., Meyer, F., and Granjon, D. (2022). shinyWidgets: Custom
-            inputs widgets for shiny. (v 0.7.0). [R package]. Available from
+            "Perrier, V., Meyer, F., and Granjon, D. (2023). shinyWidgets: Custom
+            inputs widgets for shiny. (v0.7.6). [R Package]. Availble from
             https://CRAN.R-project.org/package=shinyWidgets"
           ),
           p(
             class = "hangingindent",
-            "Wickham, H., François, R., Henry, L., Müller, K. (2022). dplyr: A 
-            Grammar of Data Manipulation. (v 1.0.9).[R package]. Available from 
-            https://dplyr.tidyverse.org"
+            "Wickham, H., François, R., Henry, L., Müller, K. (2023). dplyr: A 
+            Grammar of Data Manipulation. (v 1.1.2).[R package]. Available from 
+            https://CRAN.R-project.org/package=dplyr"
           ),
           p(
             class = "hangingindent",
             "Wickham, H. (2016). ggplot2: Elegant graphics for data analysis.
-            Springer-Verlag:New York. (v 3.3.6) [R package]. Available from
+            Springer-Verlag:New York. (v 3.4.2) [R package]. Available from
             https://ggplot2.tidyverse.org"
           ),
           br(),
@@ -420,12 +434,12 @@ server <- function(input, output, session) {
         type = "info",
         title = "Information",
         text = "This app can explore p-value function in different situations 
-        or do a two-tailed hypothesis test for one single sample"
+        or do a two-tailed hypothesis test for one single sample."
       )
     }
   )
-  ## set buttons----
-  ### explore button
+  
+  ## Go button ----
   observeEvent(
     eventExpr = input$go,
     handlerExpr = {
@@ -436,182 +450,117 @@ server <- function(input, output, session) {
       )
     }
   )
-  ### simulate button proportion
+  
+  ## Update mean null hypothesis slider ----
+  observeEvent(
+    eventExpr = input$types,
+    handlerExpr = {
+      defaultValue <- switch(
+        EXPR = input$types,
+        Poisson = 25,
+        Normal = 90,
+        Uniform = 60
+      )
+      maxValue <- ifelse(
+        test = input$types == "Poisson",
+        yes = 50,
+        no = 120
+      )
+      
+      updateSliderInput(
+        session = session,
+        inputId = "theta0",
+        value = defaultValue,
+        max = maxValue
+      )
+    },
+    label = "here1"
+  )
+  
+  ## Update simulate buttons ----
+  
+  ### Proportion ----
   observeEvent(
     eventExpr = input$simforp,
     handlerExpr = {
       updateButton(
         session = session,
         inputId = "simforp",
-        label = "Re-simulate!",
+        label = " Re-simulate!",
+        icon("retweet"),
         style = "default",
         disabled = FALSE 
       )
     }
   )
-  ### simulation button mean
+  ### Mean ----
   observeEvent(
     eventExpr = input$sim,
     handlerExpr = {
       updateButton(
         session = session,
         inputId = "sim",
-        label = "Re-simulate!",
+        label = " Re-simulate!",
+        icon = icon("retweet"),
         style = "default",
         disabled = FALSE
       )
     }
   )
   
-  ## update inputs values----
+  ## Update inputs values ----
   ## population selection
   selection <- eventReactive(
-    eventExpr = c(input$sim,input$simforp),
+    eventExpr = c(input$sim, input$simforp),
     valueExpr = {
-      if(input$whichtype=='mean'){
-        value <- input$types}
-      if(input$whichtype=='pro'){
-        value <- input$binomial}
-      return(value)
+      switch(
+        EXPR = input$whichType,
+        mean = input$types,
+        pro = input$binomial
+      )
     }
   )
-
-  ### update theta0 of Mean
-  output$choosetheta0 <- renderUI({
-    if(input$types=='Poisson'){
-      theta0 <- sliderInput(
-        inputId = "theta0",
-        label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
-        min = 0,
-        max = 50,
-        value = 25,
-        step = 1
-        )
-    }
-    if(input$types=='Normal'){
-      theta0 <- sliderInput(
-        inputId = "theta0",
-        label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
-        min = 0,
-        max = 120,
-        value = 90,
-        step = 1
-        )
-    }
-    if(input$types=='Uniform'){
-      theta0 <- sliderInput(
-        inputId = "theta0",
-        label = div(HTML(paste0("H",tags$sub("0"),": ", "&mu;"))),
-        min = 0,
-        max = 120,
-        value = 60,
-        step = 1
-        )
-    }
-    return(theta0)
-    }
-    )
   
-  ### update sd of normal
-  output$choosepopsd <- renderUI({
-    if(input$types=='Normal'){
-      numericInput(
-        inputId = "norsd",
-        label = tags$div(
-          tags$strong("Standard deviation"),
-          HTML("&sigma;")),
-        min = 1,
-        max = 50, 
-        value = 10,
-        step = 1
-        )
-      }
-    }
-    )
   
   ### update popsd of Mean
-  getpopsd <- function(selection){
-    # default value
-    if(selection=='Binomial'){
-      popsd <- 1
-    }
-    if(selection=='Poisson'){
-      popsd <- sqrt(25)
-    }
-    if(selection=='Normal'){
-      popsd <- norsd()
-    }
-    if(selection=='Uniform'){
-      popsd <- sqrt(1200)
-    }
-    return(popsd)
-  }
-  
-  
-  ### update some statistics
-  ### proportion part 
-  theta0p <- eventReactive(
-    eventExpr = input$simforp,
+  popsd <- eventReactive(
+    eventExpr = c(input$sim, input$simforp),
     valueExpr = {
-      input$theta0ofp
+      switch(
+        EXPR = selection(),
+        Binomial = 1,
+        Poisson = 5, # original had sqrt(25)
+        Normal = input$norsd,
+        Uniform = sqrt(1200)
+      )
     }
   )
   
-  np <- eventReactive(
-    eventExpr = input$simforp,
-    valueExpr = {
-      input$nofp
-    }
-  )
-  
-  clp <- eventReactive(
-    eventExpr = input$simforp,
-    valueExpr = {
-      input$clofp
-      }
+  ## Get Sample Data ----
+  sampledatap <- reactive(
+    getSample(
+      selection = selection(),
+      n = input$nofp,
+      popsd = popsd()
     )
-  
-  sampledatap <- reactive(getsample(selection(),np()))
+  )
   successp <- reactive(sum(sampledatap()))
-  phatp <- reactive(round(mean(sampledatap()),3))
+  phatp <- reactive(round(mean(sampledatap()), digits = 3))
   
-  ### mean part 
-  popsd <- reactive(getpopsd(selection()))
-  norsd <- eventReactive(
-    eventExpr = input$sim,
-    valueExpr = {
-      input$norsd
-      }
+  sampledata <- reactive(
+    getSample(
+      selection = selection(),
+      n = input$n,
+      popsd = popsd()
     )
-  
-  theta0 <- eventReactive(
-    eventExpr = input$sim,
-    valueExpr = {
-      input$theta0
-      }
-    )
-  
-  n <- eventReactive(
-    eventExpr = input$sim,
-    valueExpr = {
-      input$n
-      }
-    )
-  
-  cl <- eventReactive(
-    eventExpr = input$sim,
-    valueExpr = {
-      input$cl
-      }
-    )
-  sampledata <-reactive(getsample(selection(),n(),popsd()))
-  meanhat <- reactive(round(mean(sampledata()),3))
+  )
+  meanhat <- reactive(round(mean(sampledata()), digits = 3))
   
   ### error message
   observeEvent(
     eventExpr = input$sim ,
     handlerExpr = {
-      if(popsd() <= 0){
+      if (popsd() <= 0) {
         sendSweetAlert(
           session = session,
           type = "error",
@@ -625,145 +574,156 @@ server <- function(input, output, session) {
   
   ### update p-value
   getpvalue <- function(selection){
-    if(selection=='Binomial'){
-      p_value <- binom.exact(
+    if (selection == 'Binomial') {
+      pValue <- binom.exact(
         x = successp(),
-        n = np(),
-        p = theta0p(),
+        n = input$nofp,
+        p = input$theta0ofp,
         alternative = "two.side",
         tsmethod = "central"
       )$p.value
-    }
-    if(selection=='Poisson'){
-      p_value <- poisson.exact(
+    } else if (selection == 'Poisson') {
+      pValue <- poisson.exact(
         x = sum(sampledata()),
-        T = n(),
-        r = theta0(),
+        T = input$n,
+        r = input$theta0,
         alternative = "two.side",
         tsmethod = "central"
       )$p.value
+    } else if (selection == 'Normal' || selection == 'Uniform') {
+      z_score <- (meanhat() - input$theta0)/(popsd()/sqrt(input$n))
+      pValue <- 2*pnorm(-abs(z_score))
     }
-    if(selection=='Normal'||selection=='Uniform'){
-      z_score <- (meanhat()-theta0())/(popsd()/sqrt(n()))
-      p_value <- 2*pnorm(-abs(z_score))
-    }
-    return(round(p_value,3))
+    return(round(pValue, digits = 3))
   }
   
-  #### show sample data
-  output$sampledataPop <- renderUI({
-    validate(
-      need(
-        expr = selection()=='Binomial',
-        message = ""
-      )
-    )
-    withMathJax(
-      p("Sample Data"),
-      p("\\(n =\\) ", np()),
-      p("\\(x =\\) ", successp()),
-      p("\\(\\hat{p} =\\) ", phatp()),
-      helpText(
-        paste0(
-          "Assumptions \\( n\\hat{p} \\geq 5\\) and \\( n(1-\\hat{p}) \\geq 5\\)", 
-          ifelse(np() * phatp() >= 5 & np() * (1 - phatp()) >= 5, 
-                 " are met.",
-                 " are not met.")
+  ### Show Sample Information ----
+  observeEvent(
+    eventExpr = input$simforp,
+    handlerExpr = {
+      output$sampledataPop <- renderUI({
+        validate(
+          need(
+            expr = selection() == 'Binomial',
+            message = ""
           )
         )
-      )
+        withMathJax(
+          h3("Sample Information"),
+          p(
+            "\\(n =\\) ", input$nofp, br(),
+            "\\(x =\\) ", successp(), br(),
+            "\\(\\widehat{p} =\\) ", phatp(), br(),
+            "Assumptions: \\( n\\widehat{p} \\geq 5\\) and \\( n(1-\\widehat{p}) \\geq 5\\)",
+            ifelse(
+              test = input$nofp * phatp() >= 5 & input$nofp * (1 - phatp()) >= 5,
+              yes = " are met.",
+              no = " are not met."
+            )
+          )
+        )
+      })
     }
-    )
-  
-  output$sampledataMean <- renderUI({
-    validate(
-      need(
-        expr = selection()!='Binomial',
-        message = ""
-      )
-    )
-    validate(
-      need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
-           message = ""
-      ) 
-    )
-    withMathJax(
-      p("Sample Data"),
-      p("\\(n =\\) ", n()),
-      p("\\(\\bar{x} =\\) ", meanhat()),
-      p("\\(\\sigma =\\) ", round(popsd(),3))
-    )
-  }
   )
   
-  #### plots----
+  observeEvent(
+    eventExpr = input$sim,
+    handlerExpr = {
+      output$sampledataMean <- renderUI({
+        validate(
+          need(
+            expr = selection() != 'Binomial',
+            message = ""
+          )
+        )
+        validate(
+          need(
+            expr = input$norsd > 0 || selection() == "Uniform" ||
+              selection() == "Poisson",
+            message = ""
+          ) 
+        )
+        withMathJax(
+          h3("Sample Information"),
+          p(
+            "\\(n =\\) ", input$n, br(),
+            "\\(\\bar{x} =\\) ", meanhat(), br(),
+            "\\(\\sigma =\\) ", round(popsd(), digits = 3)
+          )
+        )
+      })
+    }
+  )
+
+  ### Plots----
   output$pfunctionMean <- renderPlot({
     validate(
       need(
-        expr = selection()!='Binomial',
+        expr = selection() != 'Binomial',
         message = "Set parameters and press the Simulate button!"
       )
     )
     validate(
       need(
-        expr = norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+        expr = input$norsd > 0 || selection() == "Uniform" ||
+          selection() == "Poisson",
         message = "Please input a valid standard error"
       )
     )
-    if(selection()=='Poisson'){
-      alpha <- 1-cl()
+    if (selection() == 'Poisson') {
+      alpha <- 1 - input$cl
       ### calculate p-value 
-      p_value <- getpvalue(selection())
+      pValue <- getpvalue(selection())
       ### ci
       ci <- poisson.exact(
         x = sum(sampledata()),
-        T = n(),
-        r = theta0(),
+        T = input$n,
+        r = input$theta0,
         alternative = "two.side",
         tsmethod = "central",
-        conf.level = cl()
+        conf.level = input$cl
       )$conf.int
       ### set xlim
       cimax <- poisson.exact(
         x = sum(sampledata()),
-        T = n(),
-        r = theta0(),
+        T = input$n,
+        r = input$theta0,
         alternative = "two.side",
         tsmethod = "central",
         conf.level = 0.999
       )$conf.int
-      xlim <- c(max(0,cimax[1]),cimax[2])
+      xlim <- c(max(0, cimax[1]), cimax[2])
       ### get p-values list
-      change <- (xlim[2]-xlim[1])/1500
+      change <- (xlim[2] - xlim[1])/1500
       theta <- xlim[1]
       pvaluelist <- c()
       thetalist <- c()
       genepvalues <- function(theta){
         poisson.exact(
           x = sum(sampledata()),
-          T = n(),
+          T = input$n,
           r = theta,
           alternative = "two.side",
           tsmethod = "central",
           conf.level = 0.99
         )$p.value
       }
-      while(theta <= xlim[2]){
+      while (theta <= xlim[2]) {
         pvalues <- genepvalues(theta)
-        pvaluelist <- c(pvaluelist,pvalues)
-        thetalist <- c(thetalist,theta)
-        theta <- theta+change
+        pvaluelist <- c(pvaluelist, pvalues)
+        thetalist <- c(thetalist, theta)
+        theta <- theta + change
       }
       ### plot
-      data <- as.data.frame(cbind(thetalist,pvaluelist))
-      data <- rename(data,theta = thetalist)
-      data <- rename(data,p_value = pvaluelist)
-      g1 <- ggplot()+
+      data <- as.data.frame(cbind(thetalist, pvaluelist))
+      data <- rename(data, theta = thetalist)
+      data <- rename(data, pValue = pvaluelist)
+      g1 <- ggplot() +
         geom_line(
           data = data,
-          mapping = aes(x = theta,y = p_value),
+          mapping = aes(x = theta, y = pValue),
           color = "blue",
-          size = 1,
+          linewidth = 1,
           alpha = 0.5
         ) +
         scale_x_continuous(
@@ -785,16 +745,17 @@ server <- function(input, output, session) {
             yend = 0, 
             colour = "Confidence interval"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         geom_point(
-          mapping = aes(x = c(ci[1],ci[2]),y = c(0,0)),
+          mapping = aes(x = c(ci[1], ci[2]),y = c(0,0)),
           alpha = 0
         ) +
         geom_errorbarh(
-          aes(xmin = ci[1],xmax = ci[2],y = 0,colour = "Confidence interval"),
+          aes(xmin = ci[1], xmax = ci[2], y = 0, colour = "Confidence interval"),
           height = 0.05*1,
-          size = 1
+          linewidth = 1
         ) +
         geom_segment(
           aes(
@@ -804,7 +765,8 @@ server <- function(input, output, session) {
             yend = 1, 
             colour = "Observed estimate"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         geom_segment(
           aes(
@@ -814,27 +776,30 @@ server <- function(input, output, session) {
             yend = 1, 
             colour = "Observed estimate"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         geom_segment(
           aes(
             x = xlim[1], 
-            y = p_value, 
-            xend = theta0(), 
-            yend = p_value, 
+            y = pValue, 
+            xend = input$theta0, 
+            yend = pValue, 
             colour = "Null value"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         geom_segment(
           aes(
-            x = theta0(), 
+            x = input$theta0, 
             y = 0, 
-            xend = theta0(), 
-            yend = p_value, 
+            xend = input$theta0, 
+            yend = pValue, 
             colour = "Null value"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         scale_color_manual(
           name = NULL,
@@ -854,58 +819,59 @@ server <- function(input, output, session) {
       return(g1)
     }
     # other two
-    if(selection()=='Normal'||selection()=='Uniform'){
-      alpha <- 1-cl()
+    if (selection() == 'Normal' || selection() == 'Uniform') {
+      alpha <- 1 - input$cl
       ### calculate p value
-      p_value <- getpvalue(selection())
+      pValue <- getpvalue(selection())
       ### set xlim
       genelimit <- function(){
-        lowerboundmax <- meanhat()+qnorm(0.001/2)*(popsd()/sqrt(n()))
-        upperboundmax <- meanhat()+qnorm(1-0.001/2)*(popsd()/sqrt(n()))
-        limit <- c(lowerboundmax,upperboundmax)
+        lowerboundmax <- meanhat() + qnorm(0.001/2)*(popsd()/sqrt(input$n))
+        upperboundmax <- meanhat() + qnorm(1 - 0.001/2)*(popsd()/sqrt(input$n))
+        limit <- c(lowerboundmax, upperboundmax)
         return(limit)
       }
       lowerboundmax <- genelimit()[1]
       upperboundmax <- genelimit()[2]
       genepvalues <- function(theta){
-        z_score <- (meanhat()-theta)/(popsd()/sqrt(n()))
-        p_value <- 2*pnorm(-abs(z_score))
-        return(p_value)
+        z_score <- (meanhat() - theta)/(popsd()/sqrt(input$n))
+        pValue <- 2*pnorm(-abs(z_score))
+        return(pValue)
       }
       #ci
       getci <- function(alpha){
-        lowerbound <- meanhat()+qnorm(alpha/2)*(popsd()/sqrt(n()))
-        upperbound <- meanhat()+qnorm(1-alpha/2)*(popsd()/sqrt(n()))
-        bound <- c(lowerbound,upperbound)
+        lowerbound <- meanhat() + qnorm(alpha/2)*(popsd()/sqrt(input$n))
+        upperbound <- meanhat() + qnorm(1 - alpha/2)*(popsd()/sqrt(input$n))
+        bound <- c(lowerbound, upperbound)
         return(bound)
       }
       ### lower bound should larger than 0 
-      lowerbound <- max(0,getci(alpha)[1])
+      lowerbound <- max(0, getci(alpha)[1])
       upperbound <- getci(alpha)[2]
-      ci <- c(lowerbound,upperbound)
+      ci <- c(lowerbound, upperbound)
       ### get p-value list
-      thetarange <- c(lowerboundmax,upperboundmax)
+      thetarange <- c(lowerboundmax, upperboundmax)
       changetheta <- diff(thetarange)/1500
       theta <- lowerboundmax
       pvaluelist <- c()
       thetalist <- c()
-      while(theta <= upperboundmax){
+      while (theta <= upperboundmax) {
         pvalues <- genepvalues(theta)
-        pvaluelist <- c(pvaluelist,pvalues)
-        thetalist <- c(thetalist,theta)
-        theta = theta+changetheta}
+        pvaluelist <- c(pvaluelist, pvalues)
+        thetalist <- c(thetalist, theta)
+        theta = theta + changetheta
+      }
       ### basic plot
-      xlim <- c(max(0,lowerboundmax),upperboundmax)
+      xlim <- c(max(0,lowerboundmax), upperboundmax)
       ###plot
-      data <- as.data.frame(cbind(thetalist,pvaluelist))
-      data <- rename(data,theta=thetalist)
-      data <- rename(data,p_value=pvaluelist)
+      data <- as.data.frame(cbind(thetalist, pvaluelist))
+      data <- rename(data, theta = thetalist)
+      data <- rename(data, pValue = pvaluelist)
       g2 <- ggplot() +
         geom_line(
           data = data,
-          mapping = aes(x = theta,y = p_value),
+          mapping = aes(x = theta, y = pValue),
           color = "blue",
-          size = 1,
+          linewidth = 1,
           alpha = 0.5
         ) +
         scale_x_continuous(
@@ -927,16 +893,17 @@ server <- function(input, output, session) {
             yend = 0, 
             colour = "Confidence interval"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         geom_point(
-          mapping = aes(x = c(ci[1],ci[2]),y = c(0,0)),
+          mapping = aes(x = c(ci[1], ci[2]),y = c(0, 0)),
           alpha = 0
         ) +
         geom_errorbarh(
-          aes(xmin = ci[1],xmax = ci[2],y = 0,colour = "Confidence interval"),
+          aes(xmin = ci[1], xmax = ci[2], y = 0, colour = "Confidence interval"),
           height = 0.05*1,
-          size = 1
+          linewidth = 1
         ) +
         geom_segment(
           aes(
@@ -946,7 +913,8 @@ server <- function(input, output, session) {
             yend = 1, 
             colour = "Observed estimate"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         geom_segment(
           aes(
@@ -956,27 +924,30 @@ server <- function(input, output, session) {
             yend = 1, 
             colour = "Observed estimate"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         geom_segment(
           aes(
             x = xlim[1],
-            y = p_value,
-            xend = theta0(), 
-            yend = p_value, 
+            y = pValue,
+            xend = input$theta0, 
+            yend = pValue, 
             colour = "Null value"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         geom_segment(
           aes(
-            x = theta0(), 
+            x = input$theta0, 
             y = 0, 
-            xend = theta0(), 
-            yend = p_value, 
+            xend = input$theta0, 
+            yend = pValue, 
             colour = "Null value"
             ),
-          size = 1
+          linewidth = 1,
+          na.rm = TRUE
         ) +
         scale_color_manual(
           name = NULL,
@@ -1001,17 +972,17 @@ server <- function(input, output, session) {
   output$sampledist <- renderPlot({
     validate(
       need(
-        expr = selection()!='Binomial',
+        expr = selection() != 'Binomial',
         message = "Set parameters and press the Simulate button!"
       )
     )
     validate(
       need(
-        expr = norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+        expr = input$norsd > 0 || selection() == "Uniform" || selection() == "Poisson",
         message = "Please input a valid standard error"
       )
     )
-    getsampling(selection(),theta0(),n(),popsd())
+    getSamplingDist(selection(), input$theta0, input$n, popsd())
   })
   
   output$pfunctionPop <- renderPlot({
@@ -1023,62 +994,62 @@ server <- function(input, output, session) {
     )
     validate(
       need(
-        expr = selection()=='Binomial',
+        expr = selection() == 'Binomial',
         message = "Set parameters and press the Simulate button!"
       )
     )
-    alphaP <- 1-clp()
+    alphaP <- 1 - input$clofp
     ### calculate pvalue
-    p_value <- getpvalue(selection())
+    pValue <- getpvalue(selection())
     ### ci
     ciP <- binom.exact(
       x = successp(),
-      n = np(),
-      p = theta0p(),
+      n = input$nofp,
+      p = input$theta0ofp,
       alternative = "two.side",
       tsmethod = "central",
-      conf.level = clp()
+      conf.level = input$clofp
     )$conf.int
     ### set xlim
     cimaxP <- binom.exact(
       x = successp(),
-      n = np(),
-      p = theta0p(),
+      n = input$nofp,
+      p = input$theta0ofp,
       alternative = "two.side",
       tsmethod = "central",
       conf.level = 0.999
     )$conf.int
-    xlimP<-c(max(0,cimaxP[1]),cimaxP[2])
+    xlimP <- c(max(0, cimaxP[1]), cimaxP[2])
     ### get p-value list
-    changeP <- (xlimP[2]-xlimP[1])/1500
+    changeP <- (xlimP[2] - xlimP[1])/1500
     thetaP <- xlimP[1]
     pvaluelistP <- c()
     thetalistP <- c()
     genepvaluesP <- function(thetaP){
       binom.exact(
         x = successp(),
-        n = np(),
+        n = input$nofp,
         p = thetaP,
         alternative = "two.side",
         tsmethod = "central"
       )$p.value
     }
-    while(thetaP <= xlimP[2]){
+    while (thetaP <= xlimP[2]) {
       pvaluesP <- genepvaluesP(thetaP)
       pvaluelistP <- c(pvaluelistP,pvaluesP)
       thetalistP <- c(thetalistP,thetaP)
-      thetaP <- thetaP+changeP
+      thetaP <- thetaP + changeP
     }
     ### plot
-    data <- as.data.frame(cbind(thetalistP,pvaluelistP))
-    data <- rename(data,theta = thetalistP)
-    data <- rename(data,p_value = pvaluelistP)
-    gP <- ggplot()+
+    data <- as.data.frame(cbind(thetalistP, pvaluelistP))
+    data <- rename(data, theta = thetalistP)
+    data <- rename(data, pValue = pvaluelistP)
+    gP <- ggplot() +
       geom_line(
         data = data,
-        mapping = aes(x = theta,y = p_value),
+        mapping = aes(x = theta, y = pValue),
         color = "blue",
-        size = 1,
+        linewidth = 1,
         alpha = 0.5
       ) +
       scale_x_continuous(
@@ -1100,16 +1071,17 @@ server <- function(input, output, session) {
           yend = 0, 
           colour = "Confidence interval"
           ),
-        size = 1
+        linewidth = 1,
+        na.rm = TRUE
       ) +
       geom_point(
-        mapping = aes(x = c(ciP[1],ciP[2]),y = c(0,0)),
+        mapping = aes(x = c(ciP[1], ciP[2]), y = c(0, 0)),
         alpha = 0
       ) +
       geom_errorbarh(
-        aes(xmin = ciP[1],xmax = ciP[2],y = 0,colour = "Confidence interval"),
+        aes(xmin = ciP[1], xmax = ciP[2], y = 0, colour = "Confidence interval"),
         height = 0.05*1,
-        size = 1
+        linewidth = 1
       ) +
       geom_segment(
         aes(
@@ -1119,7 +1091,8 @@ server <- function(input, output, session) {
           yend = 1, 
           colour = "Observed estimate"
           ),
-        size = 1
+        linewidth = 1,
+        na.rm = TRUE
       ) +
       geom_segment(
         aes(
@@ -1129,27 +1102,30 @@ server <- function(input, output, session) {
           yend = 1, 
           colour = "Observed estimate"
           ),
-        size = 1
+        linewidth = 1,
+        na.rm = TRUE
       ) +
       geom_segment(
         aes(
           x = xlimP[1],
-          y = p_value,
-          xend = theta0p(), 
-          yend = p_value,
+          y = pValue,
+          xend = input$theta0ofp, 
+          yend = pValue,
           colour = "Null value"
           ),
-        size = 1
+        linewidth = 1,
+        na.rm = TRUE
       ) +
       geom_segment(
         aes(
-          x = theta0p(),
+          x = input$theta0ofp,
           y = 0, 
-          xend = theta0p(), 
-          yend = p_value, 
+          xend = input$theta0ofp, 
+          yend = pValue, 
           colour = "Null value"
           ),
-        size = 1
+        linewidth = 1,
+        na.rm = TRUE
       ) +
       scale_color_manual(
         name = NULL,
@@ -1179,91 +1155,95 @@ server <- function(input, output, session) {
     )
     validate(
       need(
-        expr = selection()=='Binomial',
+        expr = selection() == 'Binomial',
         message = "Set parameters and press the Simulate button!"
       )
     )
-    getsampling(selection(),theta0p(),np())
+    getSamplingDist(selection(), input$theta0ofp, input$nofp)
   }
   )
   
   ### table----
-  output$pvaluePop <- renderTable({
-    validate(
-      need(
-        expr = selection()=='Binomial',
-        message = ""
+  output$pvaluePop <- renderTable(
+    expr = {
+      validate(
+        need(
+          expr = selection() == 'Binomial',
+          message = ""
+        )
       )
-    )
-    
-    p_value <- getpvalue(selection())
-    ciP <- binom.exact(
-      x = successp(),
-      n = np(),
-      p = theta0p(),
-      alternative = "two.side",
-      tsmethod = "central",
-      conf.level = clp()
-    )$conf.int
-    ctable <- matrix(c(phatp(),p_value,ciP[1],ciP[2]),nrow = 1)
-    c2 <- paste("Confidence interval"," lower bound",sep = "<br>")
-    c3 <- paste("Confidence interval"," upper bound",sep = "<br>")
-    colnames(ctable) <- c("Sample proportion","P-value",c2,c3)
-    ctable
+      
+      pValue <- getpvalue(selection())
+      ciP <- binom.exact(
+        x = successp(),
+        n = input$nofp,
+        p = input$theta0ofp,
+        alternative = "two.side",
+        tsmethod = "central",
+        conf.level = input$clofp
+      )$conf.int
+      ctable <- matrix(c(phatp(), pValue, ciP[1], ciP[2]), nrow = 1)
+      c2 <- paste("Confidence interval", " lower bound", sep = "<br>")
+      c3 <- paste("Confidence interval", " upper bound", sep = "<br>")
+      colnames(ctable) <- c("Sample proportion", "P-value", c2, c3)
+      ctable
     },
     bordered = TRUE,
-    sanitize.text.function=identity
-    )
+    sanitize.text.function = identity
+  )
   
- output$pvalue <- renderTable({
-   validate(
-     need(
-       expr = selection()!='Binomial',
-       message = ""
-     )
-   )
-   validate(
-     need(norsd() > 0 || selection()=="Uniform"|| selection()=="Poisson",
+  output$pvalue <- renderTable(
+    expr = {
+      validate(
+        need(
+          expr = selection() != 'Binomial',
           message = ""
-     ) 
-   )
-   if(selection()=="Poisson"){
-     p_value <- getpvalue(selection())
-     ci <- poisson.exact(
-       x = sum(sampledata()),
-       T = n(),
-       r = theta0(),
-       alternative = "two.side",
-       tsmethod = "central",
-       conf.level = cl()
-     )$conf.int
-     ctable <- matrix(c(meanhat(),p_value,ci[1],ci[2]),nrow = 1)
-     c2 <- paste("Confidence interval"," lower bound",sep = "<br>")
-     c3 <- paste("Confidence interval"," upper bound",sep = "<br>")
-     colnames(ctable) <- c("Sample mean","P-value",c2,c3)
-     return(ctable)
-   }
-   if(selection()=="Normal" || selection()=="Uniform"){
-     p_value <- getpvalue(selection())
-     getci <- function(alpha){
-       lowerbound <- meanhat()+qnorm(alpha/2)*(popsd()/sqrt(input$n))
-       upperbound <- meanhat()+qnorm(1-alpha/2)*(popsd()/sqrt(input$n))
-       bound <- c(lowerbound,upperbound)
-       return(bound)
-     }
-     alpha <- 1-cl()
-     ctable <- matrix(
-       c(meanhat(),p_value,max(0,getci(alpha)[1]),getci(alpha)[2]),
-       nrow=1)
-     c2 <- paste("Confidence interval"," lower bound",sep = "<br>")
-     c3 <- paste("Confidence interval"," upper bound",sep = "<br>")
-     colnames(ctable) <- c("Sample mean","P-value",c2,c3)
-     return(ctable)
-   }
-   },
-   bordered = TRUE,
-   sanitize.text.function=identity
-   )
+        )
+      )
+      validate(
+        need(
+          expr = input$norsd > 0 || selection() == "Uniform" ||
+            selection() == "Poisson",
+          message = ""
+        ) 
+      )
+      if (selection() == "Poisson") {
+        pValue <- getpvalue(selection())
+        ci <- poisson.exact(
+          x = sum(sampledata()),
+          T = input$n,
+          r = input$theta0,
+          alternative = "two.side",
+          tsmethod = "central",
+          conf.level = input$cl
+        )$conf.int
+        ctable <- matrix(c(meanhat(),pValue,ci[1],ci[2]),nrow = 1)
+        c2 <- paste("Confidence interval"," lower bound",sep = "<br>")
+        c3 <- paste("Confidence interval"," upper bound",sep = "<br>")
+        colnames(ctable) <- c("Sample mean","P-value",c2,c3)
+        return(ctable)
+      } else if (selection() == "Normal" || selection() == "Uniform") {
+        pValue <- getpvalue(selection())
+        getci <- function(alpha){
+          lowerbound <- meanhat() + qnorm(alpha/2)*(popsd()/sqrt(input$n))
+          upperbound <- meanhat() + qnorm(1 - alpha/2)*(popsd()/sqrt(input$n))
+          bound <- c(lowerbound,upperbound)
+          return(bound)
+        }
+        alpha <- 1 - input$cl
+        ctable <- matrix(
+          data = c(meanhat(), pValue, max(0, getci(alpha)[1]), getci(alpha)[2]),
+          nrow = 1
+        )
+        c2 <- paste("Confidence interval", " lower bound", sep = "<br>")
+        c3 <- paste("Confidence interval", " upper bound", sep = "<br>")
+        colnames(ctable) <- c("Sample mean", "P-value", c2, c3)
+        return(ctable)
+      }
+    },
+    bordered = TRUE,
+    sanitize.text.function = identity
+  )
 
 }
 
