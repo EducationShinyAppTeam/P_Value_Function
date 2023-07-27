@@ -1,0 +1,7 @@
+# Things Needed for This Version
+1. Review and Deploy √
+
+
+# Ideas for Future Development
++ Investigate overlap with Bayesian Inference app
++ Reorganize code to make more efficient
